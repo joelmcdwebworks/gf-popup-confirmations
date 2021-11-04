@@ -1,4 +1,4 @@
-# gf-popup-confirmations
+# Gravity Forms Popup Notifications
 Adds the ability for form submission confirmations to be displayed on modal popups for Gravity Forms.
 
 **Warning** This plugin is in development. The developer makes no garauntees about functionality or compatibility. The developer assumes no responsibility for its use. Please use at your own risk.
