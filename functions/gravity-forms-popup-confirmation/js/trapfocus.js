@@ -64,4 +64,6 @@
 
     } // trapFocus
 
+    window.trapFocus = trapFocus;
+
 })(jQuery);
