@@ -1,0 +1,58 @@
+#overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    background: rgba(0, 0, 0, 0.3);
+    height: 100%;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    z-index: 999;
+}
+
+#gform-notification {
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    display: block;
+    margin: auto;
+    max-width: 520px;
+    padding: 40px;
+    z-index: 1000;
+}
+
+#gform-notification .button {
+    display: inline-block;
+    margin: 20px 0 0;
+    padding: 12px 24px;
+    background-color: #004b78;
+    color: #FFFFFF;
+    border: 0 !important;
+    text-decoration: none;
+    outline: none;
+    font-weight: bold;
+}
+
+#gform-notification .button:hover,
+#gform-notification .button:focus {
+    background-color: #e89f4a;
+    color: #FFFFFF;
+    outline: none;
+    border: 0 !important;
+}
+
+#gform-notification .close {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    color: #525252;
+    text-decoration: none;
+    transition-duration: 200ms;
+    cursor: pointer;
+    font-size: 28px;
+}
+
+#gform-notification .close:hover {
+    color: #000000;
+}
