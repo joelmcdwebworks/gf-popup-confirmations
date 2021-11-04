@@ -28,3 +28,7 @@ This plugin allows Gravity Form confirmations to be displayed in a modal popup.
 3. Test your form.
 
 4. Optional: Use CSS to style the popup and buttons.
+
+## Updates
+
+Plugin updates will be automatically available as stable releases are published on Github.
