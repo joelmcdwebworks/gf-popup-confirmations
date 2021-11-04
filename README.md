@@ -7,7 +7,7 @@ Adds the ability for form submission confirmations to be displayed on modal popu
 
 [![Gravity Forms Popup Confirmations Plugin Overview](https://img.youtube.com/vi/weQ6UwUsfZ4/0.jpg)](https://www.youtube.com/watch?v=weQ6UwUsfZ4 "Gravity Forms Popup Confirmations Plugin Overview")
 
-The image above is a link to a view overview and demo of this plugin. I recommend opening in a new tab or window.
+The image above is a link to a video overview and demo of this plugin. I recommend opening in a new tab or window.
 
 This plugin allows Gravity Form confirmations to be displayed in a modal popup.
 
