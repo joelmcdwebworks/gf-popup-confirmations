@@ -51,16 +51,13 @@ if( ! class_exists( 'GF_Popup_Confirmations' ) ) {
             require 'plugin-update-checker/plugin-update-checker.php';
 
             $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-                'https://github.com/user-name/gf-popup-confirmations/',
+                'https://github.com/joelmcdwebworks/gf-popup-confirmations/',
                 __FILE__,
                 'gf-popup-confirmations'
             );
 
             //Set the branch that contains the stable release.
-            $myUpdateChecker->setBranch('stable-branch-name');
-
-            //Optional: If you're using a private repository, specify the access token like this:
-            $myUpdateChecker->setAuthentication('your-token-here');
+            $myUpdateChecker->setBranch('main');
 
             $myUpdateChecker->getVcsApi()->enableReleaseAssets();             
 
