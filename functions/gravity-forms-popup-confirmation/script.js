@@ -53,25 +53,15 @@
     // Clear all entered values upon form load. This will make sure the form is
     // clear when reloaded for the confirmation.
 
-    function clearValues( elem ) {
+    $(".gform-body .gfield.gfield_visibility_visible input").each( function() {
 
-        if($(elem).is(":visible")) {
-
-            $(elem).val("");
-
-        }
-        
-    }
-
-    $(".gform-body input").each( function() {
-
-        clearValues( $(this) );
+        $(this).val("");
 
     });
 
-    $(".gform-body textarea").each( function() {
+    $(".gform-body .gfield.gfield_visibility_visible textarea").each( function() {
 
-        clearValues( $(this) );
+        $(this).val("");
 
     });    
 
