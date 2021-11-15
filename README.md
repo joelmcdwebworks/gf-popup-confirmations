@@ -13,17 +13,17 @@ This plugin allows Gravity Form confirmations to be displayed in a modal popup.
 
 ## Installation
 
-1. Click the green code button and then select * *Download ZIP* *.
+1. [Download Plugin using this link](https://mcdwebworks.com/plugins/gravity-forms-popup-confirmations/) or by cliking then selecting *Download ZIP*.
 
-2. In your WordPress dashboard, click * *Add New** and then * *Upload Plugin* *.
+2. In your WordPress dashboard, click *Add New* and then *Upload Plugin*.
 
-3. Find the downloaded zip file for the plugin, and then click * *Open* *.
+3. Find the downloaded zip file for the plugin, and then click *Open*.
 
 ## Use
 
-1. In the confirmation settings for your form, select * *Text* * as the confirmation type for the default confirmation or any other confirmation you may need for the form.
+1. In the confirmation settings for your form, select *Text* as the confirmation type for the default confirmation or any other confirmation you may need for the form.
 
-2. In the form settings for your form, add * *gf_confirmation_popup* * to the CSS class for your form.
+2. In the form settings for your form, add *gf_confirmation_popup* to the CSS class for your form.
 
 3. Test your form.
 
