@@ -1,6 +1,6 @@
 (function($) {
 
-    // Move the confirmation message to the modal, open, and trao focus
+    // Move the confirmation message to the modal, open, and trap focus
 
     $("#gform-notification").detach().appendTo("#overlay");
 
@@ -50,19 +50,22 @@
 
     });    
 
-    // Clear all entered values upon form load. This will make sure the form is
-    // clear when reloaded for the confirmation.
+    // Clear all entered values upon form load. This will make sure the form is clear when reloaded for the confirmation.
 
-    $(".gform-body .gfield.gfield_visibility_visible input").each( function() {
+    $(document).on("gform_post_render", function(event, form_id, current_page) {
 
-        $(this).val("");
+        $(".gform_confirmation_wrapper input").each( function() {
 
-    });
+            $(this).val("");
 
-    $(".gform-body .gfield.gfield_visibility_visible textarea").each( function() {
+        });
 
-        $(this).val("");
+        $(".gform_confirmation_wrapper textarea").each( function() {
 
-    });    
+            $(this).val("");
+
+        });
+
+    });   
 
 })(jQuery);
