@@ -1,5 +1,5 @@
-#overlay {
-    display: flex;
+#gfcnf-overlay {
+    display: none;
     justify-content: center;
     align-items: center;
     background: #000;
@@ -11,7 +11,11 @@
     z-index: 999;
 }
 
-#gform-notification {
+.gfcnf-confirmation #gfcnf-overlay {
+    display: flex;
+}
+
+#gf-popup-confirmation {
     position: relative;
     background: #fff;
     border-radius: 10px;
@@ -22,7 +26,7 @@
     z-index: 1000;
 }
 
-#gform-notification .button {
+#gf-popup-confirmation .button {
     display: inline-block;
     margin: 20px 0 0;
     padding: 12px 24px;
@@ -34,15 +38,15 @@
     font-weight: bold;
 }
 
-#gform-notification .button:hover,
-#gform-notification .button:focus {
+#gf-popup-confirmation .button:hover,
+#gf-popup-confirmation .button:focus {
     background-color: #e89f4a;
     color: #FFFFFF;
     outline: none;
     border: 0 !important;
 }
 
-#gform-notification .close {
+#gf-popup-confirmation .close {
     position: absolute;
     top: 5px;
     right: 10px;
@@ -53,6 +57,6 @@
     font-size: 28px;
 }
 
-#gform-notification .close:hover {
+#gf-popup-confirmation .close:hover {
     color: #000000;
 }
