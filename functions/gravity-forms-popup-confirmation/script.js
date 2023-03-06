@@ -24,7 +24,7 @@
 
     if (popupConfirmation) {
 
-        var message = atob(popupConfirmation);
+        var message = decodeURI(atob(popupConfirmation));
 
         var popupMarkup = '<div id="gf-popup-confirmation" aria-modal="true" role="dialog"><a class="close">&times;</a><div class="message">' + message + '</div><a class="button" rel="nofollow" href="javascript:void(0);">OK</a></div>';
 
