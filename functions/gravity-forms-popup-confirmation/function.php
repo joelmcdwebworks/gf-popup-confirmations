@@ -102,7 +102,7 @@ function redirect_with_confirmation( $confirmation, $form, $entry, $ajax ) {
 
         global $post;
 
-        $message = base64_encode( $confirmation );
+        $message = urlencode( base64_encode( $confirmation ) );
 
         $url = get_permalink();
 
