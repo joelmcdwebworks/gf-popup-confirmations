@@ -20,6 +20,14 @@ add_action( 'gform_enqueue_scripts', function( $form ) {
 
     global $this_function;
 
+    // If no classes are set for the form, do nothing.
+
+    if( ! $form['cssClass'] ) {
+
+        return;
+
+    }
+
     if( strpos( $form['cssClass'], 'gf_confirmation_popup' ) !== false ) {
 
         wp_enqueue_style( $this_function['style'] );
@@ -35,6 +43,14 @@ add_action( 'gform_enqueue_scripts', function( $form ) {
 // Turn off AJAX for forms with gf_confirmation_popup, as this isn't compatible right now.
 
 add_filter('gform_form_args', function( $args ) {
+
+    // If no classes are set for the form, do nothing.
+
+    if( ! $form['cssClass'] ) {
+
+        return $args;
+
+    }    
 
     $form_id = $args['form_id'];
 
