@@ -42,7 +42,11 @@ add_action( 'gform_enqueue_scripts', function( $form ) {
 
 // Turn off AJAX for forms with gf_confirmation_popup, as this isn't compatible right now.
 
-add_filter('gform_form_args', function( $args ) {
+add_filter('gform_form_args', function( $args ) {   
+
+    $form_id = $args['form_id'];
+
+    $form = GFAPI::get_form( $form_id );
 
     // If no classes are set for the form, do nothing.
 
@@ -50,11 +54,7 @@ add_filter('gform_form_args', function( $args ) {
 
         return $args;
 
-    }    
-
-    $form_id = $args['form_id'];
-
-    $form = GFAPI::get_form( $form_id );
+    }     
 
     if( strpos( $form['cssClass'], 'gf_confirmation_popup' ) !== false ) {
 
