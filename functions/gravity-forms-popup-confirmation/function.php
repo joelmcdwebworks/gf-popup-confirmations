@@ -22,7 +22,7 @@ add_action( 'gform_enqueue_scripts', function( $form ) {
 
     // If no classes are set for the form, do nothing.
 
-    if( ! $form['cssClass'] ) {
+    if( ! isset( $form['cssClass'] ) ) {
 
         return;
 
@@ -50,7 +50,7 @@ add_filter('gform_form_args', function( $args ) {
 
     // If no classes are set for the form, do nothing.
 
-    if( ! $form['cssClass'] ) {
+    if( ! isset( $form['cssClass'] ) ) {
 
         return $args;
 
