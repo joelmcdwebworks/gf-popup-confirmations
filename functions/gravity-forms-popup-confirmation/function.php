@@ -114,6 +114,33 @@ function redirect_with_confirmation( $confirmation, $form, $entry, $ajax ) {
 
     // Check for controlling class. If class not used, don't alter the confirmation.
 
+    $formCSS = str_replace('  ', ' ', $form['cssClass'] );
+    $formCSS = explode(' ', $formCSS );
+    $urlParam = '';
+    $urlParams = '&';
+
+    foreach( $formCSS as $class ) {
+
+        if( strpos( $class, 'urlparam') !== false ) {
+
+            $urlParam = explode('-', $class);
+
+            $urlParams .= $urlParam[1] . '=' . $urlParam[2] . '&';
+
+        }
+
+    }
+
+    if( strlen( $urlParams ) < 2 ) {
+
+        $urlParams = '';
+
+    } else {
+
+        $urlParams = substr( $urlParams, 0, strlen( $urlParams ) - 1) ;
+
+    }
+
     if( strpos( $form['cssClass'], 'gf_confirmation_popup' ) !== false ) {
 
         global $post;
@@ -122,7 +149,7 @@ function redirect_with_confirmation( $confirmation, $form, $entry, $ajax ) {
 
         $url = get_permalink();
 
-        $confirmation = array( 'redirect' => $url . '?gfcnf=' . $message );
+        $confirmation = array( 'redirect' => $url . '?gfcnf=' . $message . $urlParams );
 
     } // if
 
