@@ -29,6 +29,10 @@ This plugin allows Gravity Form confirmations to be displayed in a modal popup.
 
 4. Optional: Use CSS to style the popup and buttons.
 
+## Adding URL Parameters
+
+You may find yourself wanting to pass URL parameters along with the confirmation. Because we're not using the standard Gravity Forms redirect settings, a way to add URL parameters via the form's CSS has been added. For example, to add the URL parameter "success=1", add the following CSS class to the form's settings, "urlparam-success-1".
+
 ## Updates
 
 Plugin updates will be automatically available as stable releases are published on Github.
