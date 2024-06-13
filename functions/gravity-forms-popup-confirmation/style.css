@@ -26,26 +26,6 @@
     z-index: 1000;
 }
 
-#gf-popup-confirmation .button {
-    display: inline-block;
-    margin: 20px 0 0;
-    padding: 12px 24px;
-    background-color: #004b78;
-    color: #FFFFFF;
-    border: 0 !important;
-    text-decoration: none;
-    outline: none;
-    font-weight: bold;
-}
-
-#gf-popup-confirmation .button:hover,
-#gf-popup-confirmation .button:focus {
-    background-color: #e89f4a;
-    color: #FFFFFF;
-    outline: none;
-    border: 0 !important;
-}
-
 #gf-popup-confirmation .close {
     position: absolute;
     top: 5px;
