@@ -170,7 +170,7 @@
 
         var message = Base64.decode(popupConfirmation);
 
-        var popupMarkup = '<div id="gf-popup-confirmation" aria-modal="true" role="dialog"><a class="close">&times;</a><div class="message">' + message + '</div><a class="button" rel="nofollow" href="javascript:void(0);">OK</a></div>';
+        var popupMarkup = '<div id="gf-popup-confirmation" aria-modal="true" role="dialog"><a class="close">&times;</a><div class="message">' + message + '</div><button class="wp-element-button gf-popup-button">OK</button></div>';
 
         // Clear message URL parameter.
         
@@ -200,7 +200,7 @@
 
     }
 
-    $("#gf-popup-confirmation a").click(function() {
+    $("#gf-popup-confirmation button").click(function() {
 
         closeModal();
 
@@ -228,24 +228,6 @@
 
         }
 
-    });    
-
-    // // Clear all entered values upon form load. This will make sure the form is clear when reloaded for the confirmation.
-
-    // $(document).on("gform_post_render", function(event, form_id, current_page) {
-
-    //     $(".gform_confirmation_wrapper input").each( function() {
-
-    //         $(this).val("");
-
-    //     });
-
-    //     $(".gform_confirmation_wrapper textarea").each( function() {
-
-    //         $(this).val("");
-
-    //     });
-
-    // });   
+    });     
 
 })(jQuery);
