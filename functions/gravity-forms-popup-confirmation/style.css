@@ -40,3 +40,7 @@
 #gf-popup-confirmation .close:hover {
     color: #000000;
 }
+
+.gform_confirmation_message {
+    margin-bottom: 1.5rem;
+}
