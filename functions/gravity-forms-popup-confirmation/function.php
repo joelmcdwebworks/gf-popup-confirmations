@@ -66,50 +66,6 @@ add_filter('gform_form_args', function( $args ) {
 
 }, 10, 1);
 
-// Alter the form's confirmation to include the form and markup for popup.
-
-// add_filter( 'gform_pre_render', function ( $form ) {
-
-//     // Check for the gf_confirmation_popup class on the loaded form.
-
-//     if( strpos( $form['cssClass'], 'gf_confirmation_popup' ) !== false ) {
-
-//         // If the gf_confirmation_popup class is preseent on the loaded form, add
-//         // markup to the footer where the confirmation modal markup will be added.
-
-//         add_filter( 'wp_footer', function() {
-
-//             echo '<div id="gfcnf-overlay"></div>';
-
-//         });
-
-//         // // Generate shortcode output for the current form for inclusion in the confirmation.
-
-//         // $shortcode = '[gravityform id="' . $form['id'] . '" title="false" description="false"]';
-
-//         // ob_start();
-
-//         // echo do_shortcode( $shortcode );
-
-//         // $html = str_replace(array("\r","\n"),'',trim(ob_get_clean()));
-
-//         // // Add the form and popup markup to all confirmations for the form.
-
-//         // if ( array_key_exists( 'confirmations', $form ) ) {
-
-//         //     foreach ( $form['confirmations'] as $key => $confirmation ) {
-
-//         //         $form['confirmations'][ $key ]['message'] = $html . '<div id="gform-notification" aria-modal="true" role="dialog"><a class="close">&times;</a><div class="message">' . $form['confirmations'][ $key ]['message'] . '</div><a class="button" rel="nofollow" href="javascript:void(0);">OK</a></div>';
-//         //     }
-
-//         // }
-
-//     } // if
-
-//     return $form;
-
-// });
-
 function redirect_with_confirmation( $confirmation, $form, $entry, $ajax ) {
 
     // Check for controlling class. If class not used, don't alter the confirmation.
