@@ -103,7 +103,7 @@ function redirect_with_confirmation( $confirmation, $form, $entry, $ajax ) {
 
         $message = urlencode( base64_encode( $confirmation ) );
 
-        $url = get_permalink();
+        $url = $entry->souce_url;
 
         $confirmation = array( 'redirect' => $url . '?gfcnf=' . $message . $urlParams );
 
