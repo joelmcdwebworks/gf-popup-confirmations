@@ -206,6 +206,12 @@
 
     });
 
+    $("#gf-popup-confirmation .close").click(function() {
+
+        closeModal();
+
+    });    
+
     $(document).on('click',function(e){
 
         if(!(($(e.target).closest("#gf-popup-confirmation").length > 0 ))){
