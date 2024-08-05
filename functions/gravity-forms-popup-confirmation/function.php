@@ -40,7 +40,7 @@ add_action( 'gform_enqueue_scripts', function( $form ) {
 
 });
 
-// Turn off AJAX for forms with gf_confirmation_popup, as this isn't compatible right now.
+// Turn off AJAX for forms with gf_confirmation_popup, as this isn't currently compatible.
 
 add_filter('gform_form_args', function( $args ) {   
 
@@ -103,7 +103,7 @@ function redirect_with_confirmation( $confirmation, $form, $entry, $ajax ) {
 
         $message = urlencode( base64_encode( $confirmation ) );
 
-        $url = $entry->souce_url;
+        $url = $entry['source_url'];
 
         $confirmation = array( 'redirect' => $url . '?gfcnf=' . $message . $urlParams );
 
