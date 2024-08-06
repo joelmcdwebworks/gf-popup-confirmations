@@ -103,9 +103,9 @@ function redirect_with_confirmation( $confirmation, $form, $entry, $ajax ) {
 
         $message = urlencode( base64_encode( $confirmation ) );
 
-        $url = $_SERVER['HTTP_REFERER'];
+        $url = strtok( $_SERVER['HTTP_REFERER'], '?' );
 
-        error_log( print_r( $url, true ) );
+        error_log( print_r( 'Redirect URL:' . $url, true ) );
 
         $confirmation = array( 'redirect' => $url . '?gfcnf=' . $message . $urlParams );
 
