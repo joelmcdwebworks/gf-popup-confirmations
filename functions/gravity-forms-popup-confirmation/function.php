@@ -68,10 +68,29 @@ add_filter('gform_form_args', function( $args ) {
 
 function redirect_with_confirmation( $confirmation, $form, $entry, $ajax ) {
 
-    // Check for controlling class. If class not used, don't alter the confirmation.
+    // If no CSS classes are being used, do nothing else
+    // and return unaltered confirmation.
 
-    $formCSS = str_replace('  ', ' ', $form['cssClass'] );
-    $formCSS = explode(' ', $formCSS );
+    if( ! isset( $form['cssClass']) ) {
+
+        return $confirmation;
+
+    }
+
+    $formCSS = $form['cssClass'];
+
+    // Check for double spacing. Replace with single spacing.
+
+    if( strpos( $formCSS, '  ') !== false ) {
+
+        $formCSS = str_replace('  ', ' ', $form['cssClass'] );
+
+    }
+
+    $formCSS = explode(' ', $formCSS ); // Make array.
+
+    // Handle URL params.
+
     $urlParam = '';
     $urlParams = '&';
 
@@ -96,6 +115,8 @@ function redirect_with_confirmation( $confirmation, $form, $entry, $ajax ) {
         $urlParams = substr( $urlParams, 0, strlen( $urlParams ) - 1) ;
 
     }
+
+    // Check for controlling class. If class not used, don't alter the confirmation.    
 
     if( strpos( $form['cssClass'], 'gf_confirmation_popup' ) !== false ) {
 
