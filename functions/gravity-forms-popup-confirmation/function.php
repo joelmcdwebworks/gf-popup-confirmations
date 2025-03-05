@@ -126,8 +126,6 @@ function redirect_with_confirmation( $confirmation, $form, $entry, $ajax ) {
 
         $url = strtok( $_SERVER['HTTP_REFERER'], '?' );
 
-        error_log( print_r( 'Redirect URL:' . $url, true ) );
-
         $confirmation = array( 'redirect' => $url . '?gfcnf=' . $message . $urlParams );
 
     } // if
