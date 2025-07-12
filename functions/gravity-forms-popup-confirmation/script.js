@@ -142,6 +142,24 @@
 
     }
 
+    // Prevent multiple executions of this script
+    if (window.gfPopupConfirmationExecuted) {
+        console.log('GF Popup Confirmation script already executed, skipping...');
+        return;
+    }
+    window.gfPopupConfirmationExecuted = Date.now();
+    
+    console.log('GF Popup Confirmations: Script execution guard passed');
+    
+    // Clear any stale popup timestamps on page load
+    var pageLoadTime = Date.now();
+    var lastPageLoad = sessionStorage.getItem('gf_popup_page_load');
+    if (!lastPageLoad || (pageLoadTime - parseInt(lastPageLoad)) > 5000) {
+        sessionStorage.removeItem('gf_popup_last_time');
+        sessionStorage.setItem('gf_popup_page_load', pageLoadTime.toString());
+        console.log('GF Popup Confirmations: Cleared stale popup timestamps');
+    }
+
     // Check for confirmation URL parameter.
 
     // https://stackoverflow.com/questions/19491336/how-to-get-url-parameter-using-jquery-or-plain-javascript
@@ -163,8 +181,47 @@
     };
 
     var popupConfirmation = getUrlParameter('gfcnf');
+    
+    console.log('gfcnf URL parameter value:', popupConfirmation);
+    console.log('Current URL:', window.location.href);
+    console.log('Script execution timestamp:', new Date().toISOString());
 
     if (popupConfirmation) {
+        console.log('Found gfcnf parameter, clearing URL first...');
+        console.log('Original URL before clearing:', window.location.href);
+        
+        // Clear the parameter immediately to prevent it from persisting
+        var newUrl = window.location.href.replace(/[?&]gfcnf=[^&#]*/, '');
+        // Clean up any double ? or & characters
+        newUrl = newUrl.replace(/\?&/, '?').replace(/&&/, '&');
+        // Remove trailing ? if no other parameters
+        newUrl = newUrl.replace(/\?$/, '');
+        
+        // Update the URL without the gfcnf parameter
+        window.history.replaceState({}, document.title, newUrl);
+        
+        console.log('URL after clearing gfcnf parameter:', newUrl);
+        console.log('Current URL after replaceState:', window.location.href);
+        
+        // Check if this parameter was just set (within the last few seconds)
+        var currentTime = Date.now();
+        var lastPopupTime = sessionStorage.getItem('gf_popup_last_time');
+        
+        if (lastPopupTime) {
+            var timeDiff = currentTime - parseInt(lastPopupTime);
+            console.log('GF Popup Confirmations: Time since last popup:', timeDiff + 'ms');
+            
+            // If less than 2 seconds, this might be a stale parameter
+            if (timeDiff < 2000) {
+                console.log('GF Popup Confirmations: Parameter too recent, likely stale - not displaying popup');
+                return;
+            }
+        }
+        
+        // Store the current time
+        sessionStorage.setItem('gf_popup_last_time', currentTime.toString());
+        
+        console.log('Displaying popup confirmation');
 
         // var message = decodeURI(atob(popupConfirmation));
 
@@ -172,21 +229,34 @@
 
         var popupMarkup = '<div id="gf-popup-confirmation" aria-modal="true" role="dialog"><a class="close">&times;</a><div class="message">' + message + '</div><button class="wp-element-button gf-popup-button">OK</button></div>';
 
-        // Clear message URL parameter.
-        
-        const url = new URL(location);
-        url.searchParams.delete('gfcnf');
-        history.replaceState(null, null, url);
-
         $('body').append( '<div id="gfcnf-overlay"></div>' );
 
         $('#gfcnf-overlay').append( popupMarkup );
 
         $('body').addClass('gfcnf-confirmation');
 
-        trapFocus( $('.message-sent #gf-popup-confirmation') ); // Trap focus.        
+        trapFocus( $('.message-sent #gf-popup-confirmation') ); // Trap focus.
 
+        popupConfirmation = null;
+
+    } else {
+        console.log('No popup confirmation to display');
     }
+    
+    // Debug: Check if any forms on the page have the gfcnf parameter in their action
+    $('form').each(function(index) {
+        var $form = $(this);
+        var formAction = $form.attr('action') || '';
+        if (formAction.indexOf('gfcnf') !== -1) {
+            console.log('GF Popup Confirmations: Form ' + index + ' has gfcnf in action:', formAction);
+            
+            // Clean up the form action to remove gfcnf parameter
+            var cleanAction = formAction.replace(/[?&]gfcnf=[^&#]*/, '');
+            cleanAction = cleanAction.replace(/\?&/, '?').replace(/&&/, '&').replace(/\?$/, '');
+            $form.attr('action', cleanAction);
+            console.log('GF Popup Confirmations: Cleaned form action to:', cleanAction);
+        }
+    });
 
     // Close the modal
 
