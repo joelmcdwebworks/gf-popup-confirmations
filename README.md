@@ -1,38 +1,127 @@
-# Gravity Forms Popup Notifications
-Adds the ability for form submission confirmations to be displayed on modal popups for Gravity Forms.
+# Gravity Forms Popup Confirmations
 
-**Warning** This plugin is in development. The developer makes no garauntees about functionality or compatibility. The developer assumes no responsibility for its use. Please use at your own risk.
+A WordPress plugin that provides popup modal functionality for Gravity Forms confirmations with enhanced accessibility and modern browser support.
 
-## Overview
+## Features
 
-[![Gravity Forms Popup Confirmations Plugin Overview](https://img.youtube.com/vi/weQ6UwUsfZ4/0.jpg)](https://www.youtube.com/watch?v=weQ6UwUsfZ4 "Gravity Forms Popup Confirmations Plugin Overview")
+- **Native HTML Dialog Support**: Uses the modern `<dialog>` element for better accessibility and reduced JavaScript complexity
+- **Backward Compatibility**: Falls back to custom modal implementation for older browsers
+- **Admin Interface**: Easy-to-use admin interface to enable popup confirmations without CSS classes
+- **Legacy Support**: Maintains compatibility with existing CSS class method (`gf_confirmation_popup`)
+- **Enhanced Accessibility**: Automatic focus management, screen reader announcements, and keyboard navigation
 
-The image above is a link to a video overview and demo of this plugin. I recommend opening in a new tab or window.
+## Browser Support
 
-This plugin allows Gravity Form confirmations to be displayed in a modal popup.
+### Native Dialog Element Support
+- **Chrome**: 37+ (2014)
+- **Firefox**: 98+ (2022)
+- **Safari**: 15.4+ (2022)
+- **Edge**: 79+ (2020)
+
+### Fallback Support
+For older browsers that don't support the native `<dialog>` element, the plugin automatically falls back to a custom modal implementation with:
+- Custom focus trapping
+- Manual ESC key handling
+- Overlay-based positioning
 
 ## Installation
 
-1. [Download Plugin using this link](https://mcdwebworks.com/plugins/gravity-forms-popup-confirmations/) or by cliking then selecting *Download ZIP*.
+1. Upload the plugin files to `/wp-content/plugins/gf-popup-confirmations/`
+2. Activate the plugin through the 'Plugins' menu in WordPress
+3. Configure popup confirmations in your Gravity Forms settings
 
-2. In your WordPress dashboard, click *Add New* and then *Upload Plugin*.
+## Usage
 
-3. Find the downloaded zip file for the plugin, and then click *Open*.
+### Method 1: Admin Interface (Recommended)
 
-## Use
+1. Go to **Forms > Settings > Confirmations** in your Gravity Forms form
+2. Select "Text" as the confirmation type
+3. Check the "Display this message as a popup/modal" option
+4. Save your form
 
-1. In the confirmation settings for your form, select *Text* as the confirmation type for the default confirmation or any other confirmation you may need for the form.
+### Method 2: CSS Class (Legacy)
 
-2. In the form settings for your form, add *gf_confirmation_popup* to the CSS class for your form.
+Add the CSS class `gf_confirmation_popup` to your form's CSS Class field in the form settings.
 
-3. Test your form.
+## Technical Implementation
 
-4. Optional: Use CSS to style the popup and buttons.
+### Native Dialog Implementation
 
-## Adding URL Parameters
+For modern browsers, the plugin uses the HTML `<dialog>` element:
 
-You may find yourself wanting to pass URL parameters along with the confirmation. Because we're not using the standard Gravity Forms redirect settings, a way to add URL parameters via the form's CSS has been added. For example, to add the URL parameter "success=1", add the following CSS class to the form's settings, "urlparam-success-1".
+```javascript
+// Browser detection
+function supportsDialog() {
+    return typeof HTMLDialogElement !== 'undefined' && 
+           typeof HTMLDialogElement.prototype.showModal === 'function';
+}
 
-## Updates
+// Native dialog creation
+if (supportsDialog()) {
+    createNativeDialog(message);
+} else {
+    createLegacyDialog(message);
+}
+```
 
-Plugin updates will be automatically available as stable releases are published on Github.
+### Accessibility Features
+
+#### Native Dialog (Modern Browsers)
+- Automatic focus management
+- Built-in ESC key handling
+- Screen reader announcements
+- Native ARIA semantics
+
+#### Legacy Modal (Older Browsers)
+- Custom focus trapping
+- Manual ESC key handling
+- Proper ARIA attributes
+- Keyboard navigation support
+
+## Development
+
+### File Structure
+
+```
+gf-popup-confirmations/
+├── functions/
+│   └── gravity-forms-popup-confirmation/
+│       ├── function.php          # Main functionality
+│       ├── admin.php             # Admin interface
+│       ├── admin.js              # Admin JavaScript
+│       ├── admin.css             # Admin styles
+│       ├── script.js             # Frontend JavaScript
+│       ├── style.css             # Frontend styles
+│       └── js/
+│           └── trapfocus.js      # Focus trapping for legacy modal
+└── gf-popup-confirmations.php    # Plugin header
+```
+
+### Key Functions
+
+- `gf_popup_confirmations_should_use_popup()`: Determines if a form should use popup confirmations
+- `supportsDialog()`: Checks browser support for native dialog element
+- `createNativeDialog()`: Creates and shows native dialog modal
+- `createLegacyDialog()`: Creates and shows legacy div-based modal
+
+## Changelog
+
+### Version 2.0.0
+- **NEW**: Native HTML `<dialog>` element support for modern browsers
+- **IMPROVED**: Enhanced accessibility with automatic focus management
+- **IMPROVED**: Reduced JavaScript complexity
+- **MAINTAINED**: Full backward compatibility with existing implementations
+- **MAINTAINED**: Legacy CSS class method support
+
+### Version 1.x.x
+- Initial release with CSS class-based popup confirmations
+- Admin interface for popup settings
+- Custom modal implementation
+
+## Support
+
+For support and feature requests, please visit the plugin's support page or create an issue in the repository.
+
+## License
+
+This plugin is licensed under the GPL v2 or later.

@@ -148,6 +148,9 @@
     }
     window.gfPopupConfirmationExecuted = Date.now();
     
+    // Store the element that had focus before modal opened
+    var elementBeforeModal = null;
+    
     // Clear any stale popup timestamps on page load
     var pageLoadTime = Date.now();
     var lastPageLoad = sessionStorage.getItem('gf_popup_page_load');
@@ -196,6 +199,217 @@
         return cleanedUrl;
     };
 
+    // Check if browser supports native dialog element
+    function supportsDialog() {
+        return typeof HTMLDialogElement !== 'undefined' && 
+               typeof HTMLDialogElement.prototype.showModal === 'function';
+    }
+
+    // Create and show modal using native dialog element
+    function createNativeDialog(message) {
+        var sanitizedMessage = sanitizeMessage(message);
+        
+        // Store the currently focused element before opening modal
+        elementBeforeModal = document.activeElement;
+        
+        // Create live region for screen reader announcements
+        var liveRegion = document.getElementById('gf-popup-live-region');
+        if (!liveRegion) {
+            liveRegion = document.createElement('div');
+            liveRegion.id = 'gf-popup-live-region';
+            liveRegion.setAttribute('aria-live', 'polite');
+            liveRegion.setAttribute('aria-atomic', 'true');
+            liveRegion.style.position = 'absolute';
+            liveRegion.style.left = '-10000px';
+            liveRegion.style.width = '1px';
+            liveRegion.style.height = '1px';
+            liveRegion.style.overflow = 'hidden';
+            document.body.appendChild(liveRegion);
+        }
+        
+        var dialogMarkup = '<dialog id="gf-popup-confirmation" aria-labelledby="gf-popup-title">' +
+            '<button type="button" class="close" aria-label="Close confirmation dialog" title="Close confirmation dialog"><span class="icon-close" aria-hidden="true"></span></button>' +
+            '<div class="message" id="gf-popup-title" tabindex="-1">' + sanitizedMessage + '</div>' +
+            '<button class="wp-element-button gf-popup-button">OK</button>' +
+            '</dialog>';
+
+        $('body').append(dialogMarkup);
+
+        var dialog = document.getElementById('gf-popup-confirmation');
+        
+        // Add event listeners
+        $(dialog).find('.gf-popup-button').click(function() {
+            closeNativeDialog();
+        });
+
+        $(dialog).find('.close').click(function() {
+            closeNativeDialog();
+        });
+
+        // Add keyboard event listeners for native dialog
+        $(dialog).on('keydown', function(e) {
+            if (e.key === 'Tab') {
+                var focusableElements = dialog.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                var firstElement = focusableElements[0];
+                var lastElement = focusableElements[focusableElements.length - 1];
+                
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        lastElement.focus();
+                        e.preventDefault();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        firstElement.focus();
+                        e.preventDefault();
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                closeNativeDialog();
+            }
+        });
+
+        // Show the dialog
+        dialog.showModal();
+        
+        // Announce modal opening to screen readers
+        if (liveRegion) {
+            liveRegion.textContent = 'Confirmation dialog opened';
+        }
+        
+        // Focus the OK button (primary action) when dialog opens
+        var okButton = dialog.querySelector('.gf-popup-button');
+        if (okButton) {
+            okButton.focus();
+        }
+    }
+
+    // Create and show modal using legacy div-based approach
+    function createLegacyDialog(message) {
+        var sanitizedMessage = sanitizeMessage(message);
+        
+        // Store the currently focused element before opening modal
+        elementBeforeModal = document.activeElement;
+        
+        var popupMarkup = '<div id="gf-popup-confirmation" aria-modal="true" role="dialog" aria-labelledby="gf-popup-title">' +
+            '<button type="button" class="close" aria-label="Close confirmation dialog" title="Close confirmation dialog"><span class="icon-close" aria-hidden="true"></span></button>' +
+            '<div class="message" id="gf-popup-title" tabindex="-1">' + sanitizedMessage + '</div>' +
+            '<button class="wp-element-button gf-popup-button">OK</button>' +
+            '</div>';
+
+        $('body').append('<div id="gfcnf-overlay"></div>');
+        $('#gfcnf-overlay').append(popupMarkup);
+        $('body').addClass('gfcnf-confirmation');
+
+        // Use existing trapFocus function for legacy implementation
+        if (typeof trapFocus === 'function') {
+            trapFocus($('#gf-popup-confirmation'));
+        }
+
+        // Add event listeners for legacy modal
+        $("#gf-popup-confirmation button").click(function() {
+            closeLegacyDialog();
+        });
+
+        $("#gf-popup-confirmation .close").click(function() {
+            closeLegacyDialog();
+        });
+
+        // Close on overlay click
+        $(document).on('click', function(e) {
+            if (!($(e.target).closest("#gf-popup-confirmation").length > 0)) {
+                closeLegacyDialog();
+            }
+        });
+
+        // Close on ESC key
+        $(document).on('keydown', function(e) {
+            if ($('#gfcnf-overlay').is(":visible")) {
+                if (e.keyCode === 27) { // ESC
+                    closeLegacyDialog();
+                }
+            }
+        });
+    }
+
+    // Sanitize message to prevent XSS and convert line breaks to paragraphs
+    function sanitizeMessage(message) {
+        var tempDiv = $('<div>').html(message);
+        
+        // Remove script tags and event handlers
+        tempDiv.find('script').remove();
+        tempDiv.find('*').removeAttr('onclick onload onerror onmouseover onfocus onblur');
+        
+        // Remove any javascript: URLs
+        tempDiv.find('a[href^="javascript:"]').removeAttr('href');
+        
+        // Convert <br> tags to <p> tags for better semantic structure
+        var htmlContent = tempDiv.html();
+        
+        // Check if content already contains block-level elements
+        var hasBlockElements = /<(p|div|h[1-6]|section|article|header|footer|main|aside|nav|blockquote|pre|table|ul|ol|li|form|fieldset|legend|address|figure|figcaption|details|summary)>/i.test(htmlContent);
+        
+        // Split by <br> tags (case insensitive)
+        var parts = htmlContent.split(/<br\s*\/?>/i);
+        
+        if (parts.length > 1) {
+            var newContent = '';
+            for (var i = 0; i < parts.length; i++) {
+                var part = parts[i].trim();
+                if (part) {
+                    // Only wrap in <p> if the part doesn't already contain block elements
+                    if (!/<(p|div|h[1-6]|section|article|header|footer|main|aside|nav|blockquote|pre|table|ul|ol|li|form|fieldset|legend|address|figure|figcaption|details|summary)>/i.test(part)) {
+                        newContent += '<p>' + part + '</p>';
+                    } else {
+                        newContent += part;
+                    }
+                }
+            }
+            tempDiv.html(newContent);
+        } else if (!hasBlockElements) {
+            // If no <br> tags and no existing block elements, wrap the entire content in a paragraph
+            var content = tempDiv.html().trim();
+            if (content) {
+                tempDiv.html('<p>' + content + '</p>');
+            }
+        }
+        // If content already has block elements, leave it as-is
+        
+        return tempDiv.html();
+    }
+
+    // Close native dialog
+    function closeNativeDialog() {
+        var dialog = document.getElementById('gf-popup-confirmation');
+        if (dialog) {
+            // Announce modal closing to screen readers
+            var liveRegion = document.getElementById('gf-popup-live-region');
+            if (liveRegion) {
+                liveRegion.textContent = 'Confirmation dialog closed';
+            }
+            
+            dialog.close();
+            $(dialog).remove();
+            
+            // Restore focus to the element that had focus before modal opened
+            if (elementBeforeModal && elementBeforeModal.focus) {
+                elementBeforeModal.focus();
+            }
+        }
+    }
+
+    // Close legacy dialog
+    function closeLegacyDialog() {
+        $("#gfcnf-overlay, #gf-popup-confirmation").fadeOut("normal", function() {
+            $(this).remove();
+            
+            // Restore focus to the element that had focus before modal opened
+            if (elementBeforeModal && elementBeforeModal.focus) {
+                elementBeforeModal.focus();
+            }
+        });
+    }
+
     var popupConfirmation = getUrlParameter('gfcnf');
 
     if (popupConfirmation) {
@@ -223,30 +437,14 @@
 
         var message = Base64.decode(popupConfirmation);
 
-        // Sanitize HTML to prevent XSS while preserving safe formatting
-        var tempDiv = $('<div>').html(message);
-        
-        // Remove script tags and event handlers
-        tempDiv.find('script').remove();
-        tempDiv.find('*').removeAttr('onclick onload onerror onmouseover onfocus onblur');
-        
-        // Remove any javascript: URLs
-        tempDiv.find('a[href^="javascript:"]').removeAttr('href');
-        
-        var sanitizedMessage = tempDiv.html();
-
-        var popupMarkup = '<div id="gf-popup-confirmation" aria-modal="true" role="dialog" aria-labelledby="gf-popup-title"><a class="close" aria-label="Close confirmation">&times;</a><div class="message" id="gf-popup-title">' + sanitizedMessage + '</div><button class="wp-element-button gf-popup-button">OK</button></div>';
-
-        $('body').append( '<div id="gfcnf-overlay"></div>' );
-
-        $('#gfcnf-overlay').append( popupMarkup );
-
-        $('body').addClass('gfcnf-confirmation');
-
-        trapFocus( $('.message-sent #gf-popup-confirmation') ); // Trap focus.
+        // Use native dialog if supported, otherwise fall back to legacy
+        if (supportsDialog()) {
+            createNativeDialog(message);
+        } else {
+            createLegacyDialog(message);
+        }
 
         popupConfirmation = null;
-
     }
     
     // Clean up any forms on the page that have the gfcnf parameter in their action
@@ -259,53 +457,5 @@
             $form.attr('action', cleanAction);
         }
     });
-
-    // Close the modal
-
-    function closeModal() {
-
-        $("#gfcnf-overlay, #gf-popup-confirmation").fadeOut("normal", function() {
-
-            $(this).remove();
-
-        });        
-
-    }
-
-    $("#gf-popup-confirmation button").click(function() {
-
-        closeModal();
-
-    });
-
-    $("#gf-popup-confirmation .close").click(function() {
-
-        closeModal();
-
-    });    
-
-    $(document).on('click',function(e){
-
-        if(!(($(e.target).closest("#gf-popup-confirmation").length > 0 ))){
-
-            closeModal();
-
-       }
-       
-    });
-    
-    $( document ).on( 'keydown', function ( e ) {
-
-        if( $('#overlay').is(":visible") ) {
-
-            if ( e.keyCode === 27 ) { // ESC
-
-                closeModal();
-    
-            }
-
-        }
-
-    });     
 
 })(jQuery);

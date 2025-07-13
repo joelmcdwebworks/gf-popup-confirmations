@@ -19,12 +19,24 @@
         const  focusableElements =
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-        const firstFocusableElement = modal.querySelectorAll(focusableElements)[0]; // get first element to be focused inside modal
-
         const focusableContent = modal.querySelectorAll(focusableElements);
+        
+        if (focusableContent.length === 0) {
+            return;
+        }
+
+        const firstFocusableElement = focusableContent[0]; // get first element to be focused inside modal
 
         const lastFocusableElement = focusableContent[focusableContent.length - 1]; // get last element to be focused inside modal
 
+        // Focus the OK button (primary action) when modal opens
+        const okButton = modal.querySelector('.gf-popup-button');
+        if (okButton) {
+            okButton.focus();
+        } else {
+            // Fallback to first focusable element if OK button not found
+            firstFocusableElement.focus();
+        }
 
         document.addEventListener('keydown', function(e) {
 
@@ -59,8 +71,6 @@
             } // if
 
         }); // Key listener
-
-        firstFocusableElement.focus();
 
     } // trapFocus
 

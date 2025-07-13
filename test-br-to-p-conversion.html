@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BR to P Conversion Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .original {
+            background-color: #f9f9f9;
+        }
+        .converted {
+            background-color: #e8f5e8;
+        }
+        .message p {
+            margin: 0 0 1rem 0;
+            line-height: 1.5;
+        }
+        .message p:last-child {
+            margin-bottom: 0;
+        }
+        button {
+            background: #0073aa;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        #test-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #test-popup.show {
+            display: flex;
+        }
+        .popup-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            position: relative;
+        }
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .close:hover {
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <h1>BR to P Conversion Test</h1>
+    
+    <div class="test-section original">
+        <h3>Test Case 1: Simple BR tags</h3>
+        <div id="original-message">
+            Thank you for your submission!<br>
+            We have received your information and will process it shortly.<br>
+            You will receive a confirmation email within 24 hours.<br>
+            If you have any questions, please contact us.
+        </div>
+    </div>
+    
+    <div class="test-section converted">
+        <h3>Converted: Simple BR tags</h3>
+        <div id="converted-message" class="message"></div>
+    </div>
+    
+    <div class="test-section original">
+        <h3>Test Case 2: Content already in P tags</h3>
+        <div id="original-message-2">
+            <p>This content is already in a paragraph tag.</p>
+            <p>This should not get wrapped in another paragraph.</p>
+        </div>
+    </div>
+    
+    <div class="test-section converted">
+        <h3>Converted: Content already in P tags</h3>
+        <div id="converted-message-2" class="message"></div>
+    </div>
+    
+    <div class="test-section original">
+        <h3>Test Case 3: Mixed content with BR and existing tags</h3>
+        <div id="original-message-3">
+            <h2>Welcome!</h2>
+            Thank you for your submission!<br>
+            <strong>Important:</strong> We have received your information.<br>
+            <a href="#">Click here</a> for more details.
+        </div>
+    </div>
+    
+    <div class="test-section converted">
+        <h3>Converted: Mixed content</h3>
+        <div id="converted-message-3" class="message"></div>
+    </div>
+    
+    <div class="test-section original">
+        <h3>Test Case 4: Single line without BR</h3>
+        <div id="original-message-4">
+            This is a single line message without any line breaks.
+        </div>
+    </div>
+    
+    <div class="test-section converted">
+        <h3>Converted: Single line</h3>
+        <div id="converted-message-4" class="message"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Popup Modal:</h3>
+        <button onclick="showPopup()">Show Popup with Converted Message</button>
+    </div>
+    
+    <div id="test-popup">
+        <div class="popup-content">
+            <span class="close" onclick="closePopup()">&times;</span>
+            <div id="popup-message" class="message"></div>
+            <button onclick="closePopup()">OK</button>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Copy of the sanitizeMessage function from the plugin
+        function sanitizeMessage(message) {
+            var tempDiv = $('<div>').html(message);
+            
+            // Remove script tags and event handlers
+            tempDiv.find('script').remove();
+            tempDiv.find('*').removeAttr('onclick onload onerror onmouseover onfocus onblur');
+            
+            // Remove any javascript: URLs
+            tempDiv.find('a[href^="javascript:"]').removeAttr('href');
+            
+            // Convert <br> tags to <p> tags for better semantic structure
+            var htmlContent = tempDiv.html();
+            
+            // Check if content already contains block-level elements
+            var hasBlockElements = /<(p|div|h[1-6]|section|article|header|footer|main|aside|nav|blockquote|pre|table|ul|ol|li|form|fieldset|legend|address|figure|figcaption|details|summary)>/i.test(htmlContent);
+            
+            // Split by <br> tags (case insensitive)
+            var parts = htmlContent.split(/<br\s*\/?>/i);
+            
+            if (parts.length > 1) {
+                var newContent = '';
+                for (var i = 0; i < parts.length; i++) {
+                    var part = parts[i].trim();
+                    if (part) {
+                        // Only wrap in <p> if the part doesn't already contain block elements
+                        if (!/<(p|div|h[1-6]|section|article|header|footer|main|aside|nav|blockquote|pre|table|ul|ol|li|form|fieldset|legend|address|figure|figcaption|details|summary)>/i.test(part)) {
+                            newContent += '<p>' + part + '</p>';
+                        } else {
+                            newContent += part;
+                        }
+                    }
+                }
+                tempDiv.html(newContent);
+            } else if (!hasBlockElements) {
+                // If no <br> tags and no existing block elements, wrap the entire content in a paragraph
+                var content = tempDiv.html().trim();
+                if (content) {
+                    tempDiv.html('<p>' + content + '</p>');
+                }
+            }
+            // If content already has block elements, leave it as-is
+            
+            return tempDiv.html();
+        }
+        
+        // Convert all test cases on page load
+        $(document).ready(function() {
+            // Test Case 1: Simple BR tags
+            var originalMessage = $('#original-message').html();
+            var convertedMessage = sanitizeMessage(originalMessage);
+            $('#converted-message').html(convertedMessage);
+            
+            // Test Case 2: Content already in P tags
+            var originalMessage2 = $('#original-message-2').html();
+            var convertedMessage2 = sanitizeMessage(originalMessage2);
+            $('#converted-message-2').html(convertedMessage2);
+            
+            // Test Case 3: Mixed content
+            var originalMessage3 = $('#original-message-3').html();
+            var convertedMessage3 = sanitizeMessage(originalMessage3);
+            $('#converted-message-3').html(convertedMessage3);
+            
+            // Test Case 4: Single line without BR
+            var originalMessage4 = $('#original-message-4').html();
+            var convertedMessage4 = sanitizeMessage(originalMessage4);
+            $('#converted-message-4').html(convertedMessage4);
+        });
+        
+        function showPopup() {
+            var originalMessage = $('#original-message').html();
+            var convertedMessage = sanitizeMessage(originalMessage);
+            $('#popup-message').html(convertedMessage);
+            $('#test-popup').addClass('show');
+        }
+        
+        function closePopup() {
+            $('#test-popup').removeClass('show');
+        }
+        
+        // Close popup when clicking outside
+        $('#test-popup').click(function(e) {
+            if (e.target === this) {
+                closePopup();
+            }
+        });
+        
+        // Close popup with ESC key
+        $(document).keydown(function(e) {
+            if (e.keyCode === 27 && $('#test-popup').hasClass('show')) {
+                closePopup();
+            }
+        });
+    </script>
+</body>
+</html> 
