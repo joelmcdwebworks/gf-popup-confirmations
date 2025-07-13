@@ -68,5 +68,3 @@ if( ! class_exists( 'GF_Popup_Confirmations' ) ) {
     GF_Popup_Confirmations::run();
 
  }
-
-?>

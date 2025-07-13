@@ -35,12 +35,30 @@
     transition-duration: 200ms;
     cursor: pointer;
     font-size: 28px;
+    padding: 5px;
+    min-width: 30px;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
 }
 
 #gf-popup-confirmation .close:hover {
     color: #000000;
+    background-color: #f0f0f0;
+}
+
+#gf-popup-confirmation .close:focus {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
 }
 
 .gform_confirmation_message {
     margin-bottom: 1.5rem;
+}
+
+#gf-popup-confirmation .gf-popup-button:focus {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
 }

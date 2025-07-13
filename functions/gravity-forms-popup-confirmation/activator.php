@@ -19,5 +19,3 @@ if( $is_active ) {
     include_once 'function.php';
 
 } // if
-
-?>

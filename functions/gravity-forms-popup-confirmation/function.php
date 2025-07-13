@@ -95,39 +95,13 @@ function gf_popup_confirmations_get_selected_confirmation($confirmation, $form, 
  */
 function gf_popup_confirmations_find_confirmation_by_entry($form, $entry): ?array {
     if (!isset($form['confirmations']) || !is_array($form['confirmations'])) {
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: No confirmations found in form');
-        } else {
-            error_log('GF Popup Confirmations: No confirmations found in form');
-        }
         return null;
-    }
-    
-    // Debug logging
-    if (function_exists('qm_log')) {
-        qm_log('GF Popup Confirmations: Finding confirmation by entry', [
-            'form_id' => $form['id'] ?? 'unknown',
-            'confirmations_count' => count($form['confirmations']),
-            'confirmation_keys' => array_keys($form['confirmations']),
-            'entry_id' => $entry['id'] ?? 'unknown'
-        ]);
-    } else {
-        error_log('GF Popup Confirmations: Finding confirmation by entry - Form ID: ' . ($form['id'] ?? 'unknown') . ', Confirmations: ' . count($form['confirmations']) . ', Entry ID: ' . ($entry['id'] ?? 'unknown'));
     }
     
     // Check conditional confirmations first
     foreach ($form['confirmations'] as $confirmation_id => $confirmation) {
         if (isset($confirmation['conditionalLogic']) && is_array($confirmation['conditionalLogic'])) {
             $evaluates_to_true = GFCommon::evaluate_conditional_logic($confirmation['conditionalLogic'], $form, $entry);
-            
-            if (function_exists('qm_log')) {
-                qm_log('GF Popup Confirmations: Checking conditional confirmation', [
-                    'confirmation_id' => $confirmation_id,
-                    'has_conditional_logic' => true,
-                    'evaluates_to_true' => $evaluates_to_true,
-                    'has_display_modal' => isset($confirmation['displayModal']) ? $confirmation['displayModal'] : 'not_set'
-                ]);
-            }
             
             if ($evaluates_to_true) {
                 return $confirmation;
@@ -137,14 +111,6 @@ function gf_popup_confirmations_find_confirmation_by_entry($form, $entry): ?arra
     
     // If no conditional confirmation matches, return the default confirmation
     $default_confirmation_id = isset($form['confirmations']['default']) ? 'default' : '0';
-    
-    if (function_exists('qm_log')) {
-        qm_log('GF Popup Confirmations: Using default confirmation', [
-            'default_confirmation_id' => $default_confirmation_id,
-            'has_default_confirmation' => isset($form['confirmations'][$default_confirmation_id]),
-            'default_has_display_modal' => isset($form['confirmations'][$default_confirmation_id]['displayModal']) ? $form['confirmations'][$default_confirmation_id]['displayModal'] : 'not_set'
-        ]);
-    }
     
     if (isset($form['confirmations'][$default_confirmation_id])) {
         return $form['confirmations'][$default_confirmation_id];
@@ -191,66 +157,37 @@ add_filter('gform_form_args', function($args): array {
  * @return mixed Modified confirmation (same type as input)
  */
 function redirect_with_confirmation($confirmation, $form, $entry, $ajax) {
-    
-    // Basic test log to see if function is called
-    error_log('GF Popup Confirmations: redirect_with_confirmation function called');
-    
-    // Debug logging
-    if (function_exists('qm_log')) {
-        qm_log('GF Popup Confirmations: redirect_with_confirmation called', [
-            'form_id' => $form['id'] ?? 'unknown',
-            'confirmation_type' => is_array($confirmation) ? 'array' : 'string',
-            'confirmation_value' => is_string($confirmation) ? substr($confirmation, 0, 100) : 'array',
-            'entry_id' => $entry['id'] ?? 'unknown',
-            'ajax' => $ajax
-        ]);
-    } else {
-        // Fallback logging if qm_log is not available
-        error_log('GF Popup Confirmations: redirect_with_confirmation called - Form ID: ' . ($form['id'] ?? 'unknown') . ', Confirmation Type: ' . (is_array($confirmation) ? 'array' : 'string') . ', Entry ID: ' . ($entry['id'] ?? 'unknown'));
-    }
-    
     // Get the actual confirmation object that was selected
     $selected_confirmation = gf_popup_confirmations_get_selected_confirmation($confirmation, $form, $entry);
     
-    // Debug: Log form confirmations to see what's configured
-    if (function_exists('qm_log')) {
-        qm_log('GF Popup Confirmations: Form confirmations', [
-            'form_confirmations' => $form['confirmations'] ?? 'none'
-        ]);
-    } else {
-        error_log('GF Popup Confirmations: Form confirmations - ' . json_encode($form['confirmations'] ?? 'none'));
-    }
-    
-    // Debug logging for selected confirmation
-    if (function_exists('qm_log')) {
-        qm_log('GF Popup Confirmations: Selected confirmation', [
-            'selected_confirmation' => $selected_confirmation ? 'found' : 'null',
-            'has_display_modal' => $selected_confirmation && isset($selected_confirmation['displayModal']) ? $selected_confirmation['displayModal'] : 'not_set',
-            'confirmation_id' => $selected_confirmation && isset($selected_confirmation['id']) ? $selected_confirmation['id'] : 'unknown'
-        ]);
-    } else {
-        // Fallback logging if qm_log is not available
-        error_log('GF Popup Confirmations: Selected confirmation - Found: ' . ($selected_confirmation ? 'yes' : 'no') . ', Display Modal: ' . ($selected_confirmation && isset($selected_confirmation['displayModal']) ? ($selected_confirmation['displayModal'] ? 'true' : 'false') : 'not_set'));
-    }
-    
     // Check if this specific confirmation should display as popup
     if (!$selected_confirmation || !gf_popup_confirmations_confirmation_should_popup($selected_confirmation, $form)) {
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Not displaying as popup - returning confirmation as-is');
-        } else {
-            error_log('GF Popup Confirmations: Not displaying as popup - returning confirmation as-is');
-        }
         return $confirmation; // Return the confirmation as-is
     }
     
-    if (function_exists('qm_log')) {
-        qm_log('GF Popup Confirmations: Displaying as popup - creating redirect');
-    } else {
-        error_log('GF Popup Confirmations: Displaying as popup - creating redirect');
+    // Build URL parameters
+    $url_params = [];
+    
+    // Handle URL parameters from confirmation settings (queryString field)
+    if (isset($selected_confirmation['queryString']) && !empty($selected_confirmation['queryString'])) {
+        $query_string = $selected_confirmation['queryString'];
+        
+        // Process merge tags in the query string
+        $processed_query_string = GFCommon::replace_variables($query_string, $form, $entry);
+        
+        // Parse the URL parameters string
+        $param_pairs = explode('&', $processed_query_string);
+        foreach ($param_pairs as $pair) {
+            $key_value = explode('=', $pair, 2);
+            if (count($key_value) === 2) {
+                $key = trim($key_value[0]);
+                $value = trim($key_value[1]);
+                $url_params[$key] = $value;
+            }
+        }
     }
     
-    // Handle URL parameters from legacy CSS class method
-    $urlParams = '';
+    // Handle URL parameters from legacy CSS class method (backwards compatibility)
     if (isset($form['cssClass'])) {
         $formCSS = $form['cssClass'];
         
@@ -266,17 +203,31 @@ function redirect_with_confirmation($confirmation, $form, $entry, $ajax) {
             if (strpos($class, 'urlparam') !== false) {
                 $urlParam = explode('-', $class);
                 if (count($urlParam) >= 3) {
-                    $urlParams .= '&' . $urlParam[1] . '=' . $urlParam[2];
+                    $key = $urlParam[1];
+                    $value = $urlParam[2];
+                    
+                    // Process merge tags if present
+                    $processed_value = GFCommon::replace_variables($value, $form, $entry);
+                    $url_params[$key] = $processed_value;
                 }
             }
         }
     }
     
-    // Create popup confirmation redirect
+    // Build the final URL
     $message = urlencode(base64_encode($confirmation));
     $url = strtok($_SERVER['HTTP_REFERER'] ?? '', '?');
     
-    return ['redirect' => $url . '?gfcnf=' . $message . $urlParams];
+    // Start with the base URL and gfcnf parameter
+    $final_url = $url . '?gfcnf=' . $message;
+    
+    // Add URL parameters
+    if (!empty($url_params)) {
+        $param_string = http_build_query($url_params);
+        $final_url .= '&' . $param_string;
+    }
+    
+    return ['redirect' => $final_url];
 }
 
 add_filter('gform_confirmation', 'redirect_with_confirmation', 10, 4);
@@ -285,6 +236,4 @@ add_filter('gform_confirmation', 'redirect_with_confirmation', 10, 4);
 if (is_admin()) {
     require_once __DIR__ . '/admin.php';
 }
-
-?>
 

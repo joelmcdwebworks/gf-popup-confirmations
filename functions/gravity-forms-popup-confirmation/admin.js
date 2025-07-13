@@ -239,24 +239,76 @@
             
             if (isMessageType) {
                 $popupSetting.show();
+                // Restore the checkbox state from the hidden input when switching back to message
+                var $hiddenInput = $popupSetting.find('input[name="_gform_setting_displayModal"]');
+                var $checkbox = $popupSetting.find('input[type="checkbox"]');
+                if ($hiddenInput.length && $checkbox.length) {
+                    var shouldBeChecked = $hiddenInput.val() === '1';
+                    $checkbox.prop('checked', shouldBeChecked);
+                    
+                    // Show/hide Query String field based on restored checkbox state
+                    if (shouldBeChecked) {
+                        showHideQueryStringField(true);
+                    }
+                    
+                    debugLog('Restored checkbox state when switching to message type:', {
+                        shouldBeChecked: shouldBeChecked,
+                        hiddenInputValue: $hiddenInput.val()
+                    });
+                }
             } else {
                 $popupSetting.hide();
-                // Uncheck the popup option when switching away from message
-                $popupSetting.find('input[type="checkbox"]').prop('checked', false);
+                // Don't uncheck the popup option when switching away from message
+                // Just hide it to preserve the state
             }
         }
         
         // Handle confirmation type changes
         $(document).on('change', 'input[value="message"], input[name="_gform_setting_type"], input[name="type"]', function() {
             var $container = $(this).closest('.gform-settings-panel, .gform-settings-field, .gform-settings-section');
+            var isMessageType = $(this).val() === 'message';
+            var previousType = $(this).data('previous-value');
+            
             debugLog('Confirmation type changed:', {
                 value: $(this).val(),
+                previousValue: previousType,
+                isMessageType: isMessageType,
                 container: $container
             });
+            
+            // Store the current value for next change
+            $(this).data('previous-value', $(this).val());
+            
+            // If switching away from message type, preserve the checkbox state in the hidden input
+            if (previousType === 'message' && !isMessageType) {
+                var $popupSetting = $container.find('.gform_popup_confirmation_setting');
+                var $checkbox = $popupSetting.find('input[type="checkbox"]');
+                var $hiddenInput = $popupSetting.find('input[name="_gform_setting_displayModal"]');
+                
+                if ($checkbox.length && $hiddenInput.length) {
+                    var wasChecked = $checkbox.is(':checked');
+                    $hiddenInput.val(wasChecked ? '1' : '0');
+                    
+                    debugLog('Preserved checkbox state when switching away from message:', {
+                        wasChecked: wasChecked,
+                        hiddenInputValue: $hiddenInput.val()
+                    });
+                }
+            }
+            
             updatePopupSettingVisibility($container);
+            
+            // If switching to message type, check if popup is enabled and show Query String field
+            if (isMessageType) {
+                var $popupCheckbox = $container.find('.popup-modal-checkbox');
+                if ($popupCheckbox.length && $popupCheckbox.is(':checked')) {
+                    debugLog('Switched to message type with popup enabled, showing Query String field');
+                    showHideQueryStringField(true);
+                }
+            }
         });
         
-        // Handle popup checkbox changes - sync with hidden input
+        // Handle popup checkbox changes - sync with hidden input and show/hide Query String field
         $(document).on('change', '.popup-modal-checkbox', function() {
             var $checkbox = $(this);
             var confirmationId = $checkbox.data('confirmation-id');
@@ -273,7 +325,28 @@
                 $hiddenInput.val(displayModal ? '1' : '0');
                 debugLog('Updated hidden input value:', $hiddenInput.val());
             }
+            
+            // Show/hide the Query String field based on popup checkbox state
+            showHideQueryStringField(displayModal);
         });
+        
+        // Function to show/hide Query String field
+        function showHideQueryStringField(showField) {
+            debugLog('Showing/hiding Query String field:', showField);
+            
+            $(".gform-settings-label").each(function() {
+                if ($(this).text().trim().indexOf('Pass Field Data via Query String') !== -1) {
+                    var $field = $(this).closest('.gform-settings-field');
+                    if (showField) {
+                        $field.show();
+                        debugLog('Query String field shown');
+                    } else {
+                        $field.hide();
+                        debugLog('Query String field hidden');
+                    }
+                }
+            });
+        }
         
         // Test function to manually check the checkbox (for debugging)
         window.testPopupCheckbox = function() {
@@ -344,7 +417,24 @@
                                 $hiddenInput.val('1');
                             }
                             
-                            debugLog('Loaded existing popup setting: checked');
+                            // Show the Query String field since popup is enabled
+                            showHideQueryStringField(true);
+                            
+                            // Populate the Query String field if there's existing data
+                            if (response.data.queryString) {
+                                $(".gform-settings-label").each(function() {
+                                    if ($(this).text().trim().indexOf('Pass Field Data via Query String') !== -1) {
+                                        var $field = $(this).closest('.gform-settings-field');
+                                        var $input = $field.find('input[type="text"], textarea');
+                                        if ($input.length) {
+                                            $input.val(response.data.queryString);
+                                            debugLog('Populated Query String field with existing data');
+                                        }
+                                    }
+                                });
+                            }
+                            
+                            debugLog('Loaded existing popup setting: checked and Query String field shown');
                         } else {
                             debugLog('No existing popup setting found or not enabled');
                         }
@@ -420,6 +510,20 @@
         debugLog('Initializing popup confirmations admin...');
         addPopupOptionToConfirmations();
         
+        // Initialize previous values for confirmation type radio buttons
+        $('input[value="message"], input[name="_gform_setting_type"], input[name="type"]').each(function() {
+            $(this).data('previous-value', $(this).val());
+        });
+        
+        // Check if popup checkbox is checked on page load and show Query String field if needed
+        setTimeout(function() {
+            var $popupCheckbox = $('.popup-modal-checkbox');
+            if ($popupCheckbox.length && $popupCheckbox.is(':checked')) {
+                debugLog('Popup checkbox is checked on page load, showing Query String field');
+                showHideQueryStringField(true);
+            }
+        }, 500);
+        
         // Handle dynamic content loading
         $(document).on('DOMNodeInserted', function(e) {
             if ($(e.target).hasClass('gform-settings-panel') || 
@@ -427,6 +531,20 @@
                 $(e.target).hasClass('gform-settings-section')) {
                 setTimeout(function() {
                     addPopupOptionToConfirmations();
+                    
+                    // Initialize previous values for any new confirmation type radio buttons
+                    $('input[value="message"], input[name="_gform_setting_type"], input[name="type"]').each(function() {
+                        if (!$(this).data('previous-value')) {
+                            $(this).data('previous-value', $(this).val());
+                        }
+                    });
+                    
+                    // Check if popup checkbox is checked and restore Query String field visibility
+                    var $popupCheckbox = $('.popup-modal-checkbox');
+                    if ($popupCheckbox.length && $popupCheckbox.is(':checked')) {
+                        debugLog('Dynamic content loaded with popup checked, showing Query String field');
+                        showHideQueryStringField(true);
+                    }
                 }, 100);
             }
         });
@@ -435,6 +553,20 @@
         setTimeout(function() {
             debugLog('Retrying popup option addition...');
             addPopupOptionToConfirmations();
+            
+            // Initialize previous values for any new confirmation type radio buttons
+            $('input[value="message"], input[name="_gform_setting_type"], input[name="type"]').each(function() {
+                if (!$(this).data('previous-value')) {
+                    $(this).data('previous-value', $(this).val());
+                }
+            });
+            
+            // Check and restore Query String field visibility
+            var $popupCheckbox = $('.popup-modal-checkbox');
+            if ($popupCheckbox.length && $popupCheckbox.is(':checked')) {
+                debugLog('Late content load with popup checked, showing Query String field');
+                showHideQueryStringField(true);
+            }
         }, 1000);
         
         // Additional check: inspect the page for any existing popup settings
@@ -510,7 +642,31 @@
                     }
                 }
             });
+            
+            // Final check for Query String field visibility
+            var $popupCheckbox = $('.popup-modal-checkbox');
+            if ($popupCheckbox.length && $popupCheckbox.is(':checked')) {
+                debugLog('Final check: popup checked, ensuring Query String field is visible');
+                showHideQueryStringField(true);
+            }
         }, 2000);
+        
+        // Add a periodic check to ensure Query String field visibility is maintained
+        setInterval(function() {
+            var $popupCheckbox = $('.popup-modal-checkbox');
+            if ($popupCheckbox.length && $popupCheckbox.is(':checked')) {
+                // Check if Query String field is hidden when it should be visible
+                $(".gform-settings-label").each(function() {
+                    if ($(this).text().trim().indexOf('Pass Field Data via Query String') !== -1) {
+                        var $field = $(this).closest('.gform-settings-field');
+                        if ($field.is(':hidden')) {
+                            debugLog('Query String field was hidden but should be visible, showing it');
+                            $field.show();
+                        }
+                    }
+                });
+            }
+        }, 3000);
         
     });
     

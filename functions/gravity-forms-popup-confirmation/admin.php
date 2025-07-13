@@ -206,6 +206,7 @@ class GF_Popup_Confirmations_Admin {
         
         // Get the confirmation setting
         $display_modal = false;
+        $query_string = '';
         
         // Try different confirmation ID formats
         $possible_ids = [$confirmation_id];
@@ -225,6 +226,7 @@ class GF_Popup_Confirmations_Admin {
         foreach ($possible_ids as $id) {
             if (isset($form['confirmations'][$id]['displayModal'])) {
                 $display_modal = boolval($form['confirmations'][$id]['displayModal']);
+                $query_string = $form['confirmations'][$id]['queryString'] ?? '';
                 break;
             }
         }
@@ -248,7 +250,10 @@ class GF_Popup_Confirmations_Admin {
             ]);
         }
         
-        wp_send_json_success(['displayModal' => $display_modal]);
+        wp_send_json_success([
+            'displayModal' => $display_modal,
+            'queryString' => $query_string
+        ]);
     }
     
     /**
@@ -280,6 +285,7 @@ class GF_Popup_Confirmations_Admin {
         }
         
         $display_modal = boolval($_POST['_gform_setting_displayModal']);
+        $query_string = sanitize_text_field($_POST['_gform_setting_queryString'] ?? '');
         
         // Debug: Log the confirmation save
         if (function_exists('qm_log')) {
@@ -306,8 +312,16 @@ class GF_Popup_Confirmations_Admin {
         if (isset($form['confirmations'][$confirmation_id])) {
             if ($display_modal) {
                 $form['confirmations'][$confirmation_id]['displayModal'] = true;
+                
+                // Save queryString if provided
+                if (!empty($query_string)) {
+                    $form['confirmations'][$confirmation_id]['queryString'] = $query_string;
+                } else {
+                    unset($form['confirmations'][$confirmation_id]['queryString']);
+                }
             } else {
                 unset($form['confirmations'][$confirmation_id]['displayModal']);
+                unset($form['confirmations'][$confirmation_id]['queryString']);
             }
             
             // Debug: Log the updated confirmation
