@@ -2,3 +2,6 @@
 functions/.DS_Store
 .DS_Store
 .cursor
+test-accessibility-improvements.html
+test-br-to-p-conversion.html
+test-dialog-implementation.html
