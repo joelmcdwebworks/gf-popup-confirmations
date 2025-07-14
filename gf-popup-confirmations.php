@@ -3,13 +3,14 @@
 /**
  * Plugin Name:       Gravity Forms Popup Confirmations
  * Plugin URI:        https://mcdwebworks.com
- * Description:       Adds the ability for form submission confirmations to be displayed on modal popups.
- * Version:           0.0.23
+ * Description:       Adds the ability for form submission confirmations to be displayed in modal popups.
+ * Version:           2.0.0
  * Author:            Joel McDonald | McDonald Web Works
  * Author URI:        https://mcdwebworks.com
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       gf-popup-confirmations
+ * Domain Path:       /languages
  */
 
 // Enable update checker for Github releases.
@@ -25,6 +26,11 @@ if( ! class_exists( 'GF_Popup_Confirmations' ) ) {
             $function = 'gf-popup-confirmations';
 
             global $function;
+
+            // Load text domain for internationalization
+            add_action('init', function() {
+                load_plugin_textdomain('gf-popup-confirmations', false, dirname(plugin_basename(__FILE__)) . '/languages');
+            });
 
             // Register style and script.
 

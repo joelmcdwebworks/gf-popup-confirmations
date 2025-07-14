@@ -1,0 +1,1 @@
+The new version includes the addition of fields to the Gravity Forms admin UI when creating/editing form confirmations and improvements to the accessibility of the popup generated.

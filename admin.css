@@ -62,4 +62,14 @@
 .gform_popup_confirmation_field label {
     font-size: 13px;
     color: #23282d;
+}
+
+#gf-popup-warning-admin.notice {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box;
+    display: block;
 } 

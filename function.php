@@ -237,3 +237,89 @@ if (is_admin()) {
     require_once __DIR__ . '/admin.php';
 }
 
+
+
+/**
+ * Check if a form has problematic confirmation types when using legacy CSS class
+ * 
+ * @param array $form The form object
+ * @return bool Whether the form has problematic confirmations
+ */
+function gf_popup_confirmations_has_problematic_confirmations($form): bool {
+    // Only check forms that have the legacy CSS class
+    if (!isset($form['cssClass']) || strpos($form['cssClass'], 'gf_confirmation_popup') === false) {
+        return false;
+    }
+    
+    // Check if any confirmations are of type 'page' or 'redirect'
+    if (isset($form['confirmations']) && is_array($form['confirmations'])) {
+        foreach ($form['confirmations'] as $confirmation_id => $confirmation) {
+            if (isset($confirmation['type']) && in_array($confirmation['type'], ['page', 'redirect'])) {
+                // Check if this confirmation has conditional logic that might be triggered
+                $should_block = true;
+                
+                if (isset($confirmation['conditionalLogic']) && is_array($confirmation['conditionalLogic'])) {
+                    $has_rules = isset($confirmation['conditionalLogic']['rules']) && 
+                                is_array($confirmation['conditionalLogic']['rules']) && 
+                                !empty($confirmation['conditionalLogic']['rules']);
+                    
+                    if (!$has_rules) {
+                        $should_block = false; // No rules means this confirmation won't be used
+                    }
+                }
+                
+                if ($should_block) {
+                    return true; // Found a problematic confirmation
+                }
+            }
+        }
+    }
+    
+    return false;
+}
+
+// Hook into validation to prevent submission ONLY if the selected confirmation is problematic
+add_filter('gform_validation', function($validation_result) {
+    $form = $validation_result['form'];
+
+    // Only check if the legacy CSS class is present
+    if (!isset($form['cssClass']) || strpos($form['cssClass'], 'gf_confirmation_popup') === false) {
+        return $validation_result;
+    }
+
+    // Build a simulated entry array from POST data
+    $entry = [];
+    foreach ($form['fields'] as $field) {
+        $field_id = is_object($field) ? $field->id : (isset($field['id']) ? $field['id'] : null);
+        if ($field_id !== null) {
+            $input_name = "input_{$field_id}";
+            if (isset($_POST[$input_name])) {
+                $entry[$field_id] = $_POST[$input_name];
+            }
+        }
+    }
+
+    // Use your helper to get the selected confirmation
+    if (function_exists('gf_popup_confirmations_find_confirmation_by_entry')) {
+        $selected_confirmation = gf_popup_confirmations_find_confirmation_by_entry($form, $entry);
+        if ($selected_confirmation && isset($selected_confirmation['type']) && in_array($selected_confirmation['type'], ['page', 'redirect'])) {
+            $validation_result['is_valid'] = false;
+            $error_message = __(
+                'Unable to submit. Confirmation type cannot be used with a form that has the class gf_confirmation_popup. Please contact the site administrator.',
+                'gf-popup-confirmations'
+            );
+            // Add error to the first field
+            if (!empty($validation_result['form']['fields'])) {
+                $validation_result['form']['fields'][0]['failed_validation'] = true;
+                $validation_result['form']['fields'][0]['validation_message'] = $error_message;
+            }
+            // Add a general form error
+            add_filter('gform_form_validation_message', function($message, $form) use ($error_message) {
+                return '<div class="validation_error">' . esc_html($error_message) . '</div>';
+            }, 10, 2);
+        }
+    }
+
+    return $validation_result;
+}, 10, 1);
+

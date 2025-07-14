@@ -1,0 +1,33 @@
+# Copyright (C) 2024 Joel McDonald | McDonald Web Works
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Gravity Forms Popup Confirmations 2.0.0\n"
+"Report-Msgid-Bugs-To: https://mcdwebworks.com\n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2024-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: function.php:280
+msgid "Unable to submit. Confirmation type cannot be used with a form that has the class gf_confirmation_popup. Please contact the site administrator."
+msgstr ""
+
+#: admin.php:380
+msgid "Gravity Forms Popup Confirmations Warning:"
+msgstr ""
+
+#: admin.php:381
+msgid "This form has the CSS class \"gf_confirmation_popup\" but contains the following confirmations that will cause fatal errors when triggered:"
+msgstr ""
+
+#: admin.php:382
+msgid "Problematic Confirmations:"
+msgstr ""
+
+#: admin.php:383
+msgid "To fix this issue, either remove the CSS class \"gf_confirmation_popup\" from the form or change these confirmation types to \"Text\"."
+msgstr "" 

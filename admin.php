@@ -18,17 +18,13 @@ class GF_Popup_Confirmations_Admin {
      */
     public function __construct() {
         add_action('admin_init', [$this, 'init']);
+        add_action('admin_footer', [$this, 'maybe_show_confirmation_type_warning']);
     }
     
     /**
      * Initialize admin hooks
      */
     public function init(): void {
-        // Debug: Log that we're initializing
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Admin class initialized');
-        }
-        
         // Always enqueue admin scripts and styles, let JavaScript handle the targeting
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
         
@@ -37,6 +33,17 @@ class GF_Popup_Confirmations_Admin {
         
         // Handle confirmation settings save
         add_action('gform_after_save_form', [$this, 'save_confirmation_popup_setting'], 10, 2);
+        
+        // Add admin notices for problematic confirmation configurations
+        // add_action('admin_notices', [$this, 'display_confirmation_warnings']); // Removed
+        
+        // Add a test notice to verify the hook is working
+        add_action('admin_notices', function() {
+            // Show a test notice on Gravity Forms pages
+            if ($this->is_gravity_forms_admin()) {
+                echo '<div class="notice notice-info is-dismissible"><p><strong>GF Popup Confirmations:</strong> Admin notices hook is working. Check the debug log for more details.</p></div>';
+            }
+        });
     }
     
     /**
@@ -59,11 +66,6 @@ class GF_Popup_Confirmations_Admin {
             );
         }
         
-        // Debug: Log the screen check
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Screen check - ' . ($current_screen ? $current_screen->id : 'no screen') . ' - GET page: ' . ($_GET['page'] ?? 'none') . ' - Result: ' . ($is_gf_admin ? 'true' : 'false'));
-        }
-        
         return $is_gf_admin;
     }
     
@@ -71,11 +73,6 @@ class GF_Popup_Confirmations_Admin {
      * Enqueue admin scripts and styles
      */
     public function enqueue_admin_assets(): void {
-        // Debug: Log that we're enqueuing assets
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Enqueuing admin assets');
-        }
-        
         wp_enqueue_script(
             'gf-popup-confirmations-admin',
             plugin_dir_url(__FILE__) . 'admin.js',
@@ -94,23 +91,10 @@ class GF_Popup_Confirmations_Admin {
         // Localize script for AJAX
         $nonce = wp_create_nonce('gf_popup_confirmations_nonce');
         
-        // Debug: Log the nonce
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Generated nonce', [
-                'nonce' => $nonce,
-                'nonce_length' => strlen($nonce)
-            ]);
-        }
-        
         wp_localize_script('gf-popup-confirmations-admin', 'gfPopupConfirmations', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => $nonce,
         ]);
-        
-        // Debug: Log the script URL
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Admin script URL - ' . plugin_dir_url(__FILE__) . 'admin.js');
-        }
     }
     
 
@@ -119,42 +103,11 @@ class GF_Popup_Confirmations_Admin {
      * Handle AJAX request to load popup confirmation setting
      */
     public function ajax_load_popup_confirmation(): void {
-        // Debug: Log the incoming request
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: AJAX request received', [
-                'post_data' => $_POST,
-                'nonce_received' => $_POST['nonce'] ?? 'none',
-                'action_received' => $_POST['action'] ?? 'none'
-            ]);
-        }
-        
         // Verify nonce
         $nonce_verified = wp_verify_nonce($_POST['nonce'] ?? '', 'gf_popup_confirmations_nonce');
         
-        // Debug: Log nonce verification
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Nonce verification', [
-                'nonce_verified' => $nonce_verified,
-                'nonce_received' => $_POST['nonce'] ?? 'none',
-                'nonce_expected' => wp_create_nonce('gf_popup_confirmations_nonce')
-            ]);
-        }
-        
         if (!$nonce_verified) {
             wp_die('Security check failed');
-        }
-        
-        // Debug: Log user capabilities
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: User capabilities check', [
-                'user_id' => get_current_user_id(),
-                'user_roles' => wp_get_current_user()->roles,
-                'can_edit_forms' => current_user_can('gravityforms_edit_forms'),
-                'can_view_forms' => current_user_can('gravityforms_view_forms'),
-                'can_full_access' => current_user_can('gravityforms_full_access'),
-                'can_manage_options' => current_user_can('manage_options'),
-                'can_edit_posts' => current_user_can('edit_posts')
-            ]);
         }
         
         // Check user capabilities - try multiple capabilities
@@ -172,17 +125,6 @@ class GF_Popup_Confirmations_Admin {
         $form_id = intval($_POST['form_id'] ?? 0);
         $confirmation_id = sanitize_text_field($_POST['confirmation_id'] ?? '');
         
-        // Debug: Log the AJAX load request
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: AJAX load request', [
-                'form_id' => $form_id,
-                'confirmation_id' => $confirmation_id,
-                'user_can_edit' => current_user_can('gravityforms_edit_forms'),
-                'user_can_view' => current_user_can('gravityforms_view_forms'),
-                'user_can_manage' => current_user_can('gravityforms_full_access')
-            ]);
-        }
-        
         if (!$form_id || !$confirmation_id) {
             wp_die('Invalid parameters');
         }
@@ -191,17 +133,6 @@ class GF_Popup_Confirmations_Admin {
         $form = GFAPI::get_form($form_id);
         if (!$form) {
             wp_die('Form not found');
-        }
-        
-        // Debug: Log the form data
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Form data for loading', [
-                'form_id' => $form_id,
-                'confirmation_id' => $confirmation_id,
-                'has_confirmations' => isset($form['confirmations']),
-                'confirmations_keys' => isset($form['confirmations']) ? array_keys($form['confirmations']) : 'none',
-                'form_confirmations' => $form['confirmations'] ?? 'none'
-            ]);
         }
         
         // Get the confirmation setting
@@ -231,25 +162,6 @@ class GF_Popup_Confirmations_Admin {
             }
         }
         
-        // Debug: Log the confirmation ID search
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Confirmation ID search', [
-                'original_id' => $confirmation_id,
-                'possible_ids' => $possible_ids,
-                'display_modal' => $display_modal
-            ]);
-        }
-        
-        // Debug: Log the load result
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Load result', [
-                'form_confirmations' => isset($form['confirmations']) ? array_keys($form['confirmations']) : 'none',
-                'confirmation_id' => $confirmation_id,
-                'display_modal' => $display_modal,
-                'has_display_modal' => isset($form['confirmations'][$confirmation_id]['displayModal'])
-            ]);
-        }
-        
         wp_send_json_success([
             'displayModal' => $display_modal,
             'queryString' => $query_string
@@ -263,50 +175,16 @@ class GF_Popup_Confirmations_Admin {
      * @param bool $is_new Whether this is a new form
      */
     public function save_confirmation_popup_setting($form, $is_new): void {
-        // Debug: Log all POST data to see what's being submitted
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Save function called', [
-                'form_id' => $form['id'] ?? 'unknown',
-                'is_new' => $is_new,
-                'post_keys' => array_keys($_POST),
-                'has_display_modal' => isset($_POST['_gform_setting_displayModal']),
-                'display_modal_value' => $_POST['_gform_setting_displayModal'] ?? 'not_set',
-                'has_confirmation_id' => isset($_POST['_gform_setting_id']),
-                'confirmation_id' => $_POST['_gform_setting_id'] ?? 'not_set'
-            ]);
-        }
-        
         // Check if we're saving confirmation settings
         if (!isset($_POST['_gform_setting_displayModal'])) {
-            if (function_exists('qm_log')) {
-                qm_log('GF Popup Confirmations: No displayModal setting found in POST data');
-            }
             return;
         }
         
         $display_modal = boolval($_POST['_gform_setting_displayModal']);
         $query_string = sanitize_text_field($_POST['_gform_setting_queryString'] ?? '');
         
-        // Debug: Log the confirmation save
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Saving confirmation popup setting', [
-                'form_id' => $form['id'],
-                'display_modal' => $display_modal,
-                'is_new' => $is_new
-            ]);
-        }
-        
         // Get the current confirmation being edited
         $confirmation_id = $_POST['_gform_setting_id'] ?? 'default';
-        
-        // Debug: Log the confirmation ID
-        if (function_exists('qm_log')) {
-            qm_log('GF Popup Confirmations: Confirmation ID for saving', [
-                'confirmation_id' => $confirmation_id,
-                'has_confirmations' => isset($form['confirmations']),
-                'confirmation_keys' => isset($form['confirmations']) ? array_keys($form['confirmations']) : 'none'
-            ]);
-        }
         
         // Update the confirmation setting
         if (isset($form['confirmations'][$confirmation_id])) {
@@ -324,30 +202,114 @@ class GF_Popup_Confirmations_Admin {
                 unset($form['confirmations'][$confirmation_id]['queryString']);
             }
             
-            // Debug: Log the updated confirmation
-            if (function_exists('qm_log')) {
-                qm_log('GF Popup Confirmations: Updated confirmation data', [
-                    'confirmation_id' => $confirmation_id,
-                    'confirmation_data' => $form['confirmations'][$confirmation_id]
-                ]);
-            }
-            
             // Save the form
             $result = GFAPI::update_form($form);
-            
-            // Debug: Log the save result
-            if (function_exists('qm_log')) {
-                qm_log('GF Popup Confirmations: Confirmation save result', [
-                    'result' => $result,
-                    'is_wp_error' => is_wp_error($result)
-                ]);
-            }
         } else {
-            if (function_exists('qm_log')) {
-                qm_log('GF Popup Confirmations: Confirmation not found for saving', [
-                    'confirmation_id' => $confirmation_id,
-                    'available_confirmations' => isset($form['confirmations']) ? array_keys($form['confirmations']) : 'none'
-                ]);
+        }
+    }
+    
+    /**
+     * Display admin warnings for problematic confirmation configurations
+     */
+    public function display_confirmation_warnings(): void {
+        // Only show on Gravity Forms admin pages
+        if (!$this->is_gravity_forms_admin()) {
+            return;
+        }
+        
+        // Check if we're on a form edit page
+        $current_screen = get_current_screen();
+        if (!$current_screen || strpos($current_screen->id, 'gravityforms') === false) {
+            return;
+        }
+        
+        // Get the current form ID from URL
+        $form_id = 0;
+        if (isset($_GET['id'])) {
+            $form_id = intval($_GET['id']);
+        }
+        
+        if (!$form_id) {
+            return;
+        }
+        
+        // Get the form
+        $form = GFAPI::get_form($form_id);
+        if (!$form) {
+            return;
+        }
+        
+        // Check if this form has the legacy CSS class
+        if (!isset($form['cssClass']) || strpos($form['cssClass'], 'gf_confirmation_popup') === false) {
+            return;
+        }
+        
+        // Check for problematic confirmations
+        $problematic_confirmations = [];
+        if (isset($form['confirmations']) && is_array($form['confirmations'])) {
+            foreach ($form['confirmations'] as $confirmation_id => $confirmation) {
+                if (isset($confirmation['type']) && in_array($confirmation['type'], ['page', 'redirect'])) {
+                    $confirmation_name = isset($confirmation['name']) ? $confirmation['name'] : $confirmation_id;
+                    $is_conditional = isset($confirmation['conditionalLogic']) && is_array($confirmation['conditionalLogic']);
+                    $has_rules = $is_conditional && isset($confirmation['conditionalLogic']['rules']) && 
+                                is_array($confirmation['conditionalLogic']['rules']) && 
+                                !empty($confirmation['conditionalLogic']['rules']);
+                    
+                    // Only include if it has rules (meaning it could be triggered)
+                    if (!$is_conditional || $has_rules) {
+                        $problematic_confirmations[] = [
+                            'name' => $confirmation_name,
+                            'type' => $confirmation['type'],
+                            'is_conditional' => $is_conditional
+                        ];
+                    }
+                }
+            }
+        }
+        
+        if (!empty($problematic_confirmations)) {
+            $confirmation_list = [];
+            foreach ($problematic_confirmations as $conf) {
+                $type_label = $conf['type'] === 'page' ? 'Page' : 'Redirect';
+                $conditional_label = $conf['is_conditional'] ? ' (conditional)' : '';
+                $confirmation_list[] = "• {$conf['name']} ({$type_label}){$conditional_label}";
+            }
+            
+            $confirmation_text = implode('<br>', $confirmation_list);
+            
+            $warning_message = sprintf(
+                '<div class="notice notice-warning is-dismissible"><p><strong>%s</strong> %s</p><p><strong>%s</strong></p><p>%s</p><p><strong>%s</strong></p></div>',
+                __('Gravity Forms Popup Confirmations Warning:', 'gf-popup-confirmations'),
+                __('This form has the CSS class "gf_confirmation_popup" but contains the following confirmations that will cause fatal errors when triggered:', 'gf-popup-confirmations'),
+                __('Problematic Confirmations:', 'gf-popup-confirmations'),
+                $confirmation_text,
+                __('To fix this issue, either remove the CSS class "gf_confirmation_popup" from the form or change these confirmation types to "Text".', 'gf-popup-confirmations')
+            );
+            
+            echo $warning_message;
+        }
+    }
+
+    public function maybe_show_confirmation_type_warning() {
+        // Only show on the confirmation subview after save
+        if (
+            isset($_GET['page'], $_GET['view'], $_GET['subview'], $_GET['id'], $_GET['cid']) &&
+            $_GET['page'] === 'gf_edit_forms' &&
+            $_GET['view'] === 'settings' &&
+            $_GET['subview'] === 'confirmation'
+        ) {
+            $form_id = intval($_GET['id']);
+            $confirmation_id = sanitize_text_field($_GET['cid']);
+            $form = GFAPI::get_form($form_id);
+
+            if (
+                $form &&
+                isset($form['cssClass']) &&
+                strpos($form['cssClass'], 'gf_confirmation_popup') !== false &&
+                isset($form['confirmations'][$confirmation_id]) &&
+                in_array($form['confirmations'][$confirmation_id]['type'], ['page', 'redirect'])
+            ) {
+                echo '<div id="gf-popup-warning-admin" class="notice notice-warning" style="margin-top:20px; display:none;"><p><strong>Warning:</strong> This form has the CSS class <code>gf_confirmation_popup</code>, but this confirmation is set to <strong>Page</strong> or <strong>Redirect</strong>. This will cause errors for users. Please use a <strong>Text</strong> confirmation or remove the CSS class.</p></div>';
             }
         }
     }
