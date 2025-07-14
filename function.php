@@ -119,10 +119,75 @@ function gf_popup_confirmations_find_confirmation_by_entry($form, $entry): ?arra
     return null;
 }
 
+/**
+ * Check if we're in Gravity Forms preview mode
+ * 
+ * @return bool Whether we're in preview mode
+ */
+function gf_popup_confirmations_is_preview_mode(): bool {
+    return (
+        (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview')
+    );
+}
+
 // Register additional scripts
 add_action('wp_enqueue_scripts', function(): void {
     wp_register_script('trapfocus', plugin_dir_url(__FILE__) . '/js/trapfocus.js', ['jquery'], '1.0.0', true);
 });
+
+// Always enqueue popup script and style on Gravity Forms preview pages
+add_action('wp_enqueue_scripts', function() {
+    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
+        wp_enqueue_style('gf-popup-confirmations-style', plugin_dir_url(__FILE__) . 'style.css');
+        wp_enqueue_script('gf-popup-confirmations-script', plugin_dir_url(__FILE__) . 'script.js', array('jquery'), false, true);
+    }
+});
+
+// Alternative approach: Force load scripts on preview pages using wp_head
+add_action('wp_head', function() {
+    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
+        echo '<link rel="stylesheet" type="text/css" href="' . plugin_dir_url(__FILE__) . 'style.css" />';
+    }
+});
+
+// Force load scripts on preview pages using wp_footer
+add_action('wp_footer', function() {
+    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
+        echo '<script type="text/javascript" src="' . plugin_dir_url(__FILE__) . 'script.js"></script>';
+    }
+});
+
+// Hook into Gravity Forms' own script loading mechanism for preview mode
+add_action('gform_enqueue_scripts', function($form) {
+    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
+        wp_enqueue_style('gf-popup-confirmations-style', plugin_dir_url(__FILE__) . 'style.css');
+        wp_enqueue_script('gf-popup-confirmations-script', plugin_dir_url(__FILE__) . 'script.js', array('jquery'), false, true);
+    }
+});
+
+// Alternative: Use Gravity Forms' init scripts mechanism
+add_action('gform_register_init_scripts', function($form) {
+    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
+        wp_enqueue_style('gf-popup-confirmations-style', plugin_dir_url(__FILE__) . 'style.css');
+        wp_enqueue_script('gf-popup-confirmations-script', plugin_dir_url(__FILE__) . 'script.js', array('jquery'), false, true);
+    }
+});
+
+// Inject script and style directly into form output in preview mode
+add_filter('gform_get_form_filter', function($form_string, $form) {
+    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
+        $style_url = plugin_dir_url(__FILE__) . 'style.css';
+        $script_url = plugin_dir_url(__FILE__) . 'script.js';
+        
+        $injected_assets = "
+        <link rel='stylesheet' type='text/css' href='{$style_url}' />
+        <script type='text/javascript' src='{$script_url}'></script>
+        ";
+        
+        return $injected_assets . $form_string;
+    }
+    return $form_string;
+}, 10, 2);
 
 // Enqueue styles and scripts when popup confirmations are needed
 add_action('gform_enqueue_scripts', function($form): void {
@@ -165,6 +230,11 @@ function redirect_with_confirmation($confirmation, $form, $entry, $ajax) {
         return $confirmation; // Return the confirmation as-is
     }
     
+    // Handle preview mode differently
+    if (gf_popup_confirmations_is_preview_mode()) {
+        return gf_popup_confirmations_build_preview_redirect_url($confirmation, $form, $entry);
+    }
+
     // Build URL parameters
     $url_params = [];
     
@@ -322,4 +392,73 @@ add_filter('gform_validation', function($validation_result) {
 
     return $validation_result;
 }, 10, 1);
+
+/**
+ * Build redirect URL specifically for preview mode
+ * 
+ * @param mixed $confirmation The confirmation message
+ * @param array $form The form object
+ * @param array $entry The entry object
+ * @return array Redirect array
+ */
+function gf_popup_confirmations_build_preview_redirect_url($confirmation, $form, $entry): array {
+    // Start with existing preview parameters
+    $params = [];
+    if (isset($_GET['gf_page'])) $params['gf_page'] = $_GET['gf_page'];
+    if (isset($_GET['id'])) $params['id'] = $_GET['id'];
+    
+    // Handle URL parameters from confirmation settings (queryString field)
+    $selected_confirmation = gf_popup_confirmations_get_selected_confirmation($confirmation, $form, $entry);
+    if ($selected_confirmation && isset($selected_confirmation['queryString']) && !empty($selected_confirmation['queryString'])) {
+        $query_string = $selected_confirmation['queryString'];
+        
+        // Process merge tags in the query string
+        $processed_query_string = GFCommon::replace_variables($query_string, $form, $entry);
+        
+        // Parse the URL parameters string
+        $param_pairs = explode('&', $processed_query_string);
+        foreach ($param_pairs as $pair) {
+            $key_value = explode('=', $pair, 2);
+            if (count($key_value) === 2) {
+                $key = trim($key_value[0]);
+                $value = trim($key_value[1]);
+                $params[$key] = $value;
+            }
+        }
+    }
+    
+    // Handle URL parameters from legacy CSS class method (backwards compatibility)
+    if (isset($form['cssClass'])) {
+        $formCSS = $form['cssClass'];
+        
+        // Check for double spacing and replace with single spacing
+        if (strpos($formCSS, '  ') !== false) {
+            $formCSS = str_replace('  ', ' ', $form['cssClass']);
+        }
+        
+        $formCSS = explode(' ', $formCSS);
+        
+        // Handle URL params from CSS classes
+        foreach ($formCSS as $class) {
+            if (strpos($class, 'urlparam') !== false) {
+                $urlParam = explode('-', $class);
+                if (count($urlParam) >= 3) {
+                    $key = $urlParam[1];
+                    $value = $urlParam[2];
+                    
+                    // Process merge tags if present
+                    $processed_value = GFCommon::replace_variables($value, $form, $entry);
+                    $params[$key] = $processed_value;
+                }
+            }
+        }
+    }
+    
+    // Add/replace the gfcnf param
+    $params['gfcnf'] = urlencode(base64_encode($confirmation));
+    
+    // Build the URL (always relative to site root)
+    $final_url = add_query_arg($params, home_url('/'));
+    return ['redirect' => $final_url];
+}
 
