@@ -135,52 +135,48 @@ add_action('wp_enqueue_scripts', function(): void {
     wp_register_script('trapfocus', plugin_dir_url(__FILE__) . '/js/trapfocus.js', ['jquery'], '1.0.0', true);
 });
 
-// Always enqueue popup script and style on Gravity Forms preview pages
+// Enqueue popup script and style on Gravity Forms preview pages only when needed
 add_action('wp_enqueue_scripts', function() {
-    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
-        wp_enqueue_style('gf-popup-confirmations-style', plugin_dir_url(__FILE__) . 'style.css');
-        wp_enqueue_script('gf-popup-confirmations-script', plugin_dir_url(__FILE__) . 'script.js', array('jquery'), false, true);
-    }
-});
-
-// Alternative approach: Force load scripts on preview pages using wp_head
-add_action('wp_head', function() {
-    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
-        echo '<link rel="stylesheet" type="text/css" href="' . plugin_dir_url(__FILE__) . 'style.css" />';
-    }
-});
-
-// Force load scripts on preview pages using wp_footer
-add_action('wp_footer', function() {
-    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
-        echo '<script type="text/javascript" src="' . plugin_dir_url(__FILE__) . 'script.js"></script>';
+    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview' && isset($_GET['id'])) {
+        $form_id = intval($_GET['id']);
+        $form = GFAPI::get_form($form_id);
+        
+        if ($form && gf_popup_confirmations_should_use_popup($form)) {
+            wp_enqueue_style('gf-popup-confirmations-style', plugin_dir_url(__FILE__) . 'style.css');
+            wp_enqueue_script('gf-popup-confirmations-script', plugin_dir_url(__FILE__) . 'script.js', array('jquery'), false, true);
+            wp_enqueue_script('trapfocus');
+        }
     }
 });
 
 // Hook into Gravity Forms' own script loading mechanism for preview mode
 add_action('gform_enqueue_scripts', function($form) {
-    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
+    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview' && gf_popup_confirmations_should_use_popup($form)) {
         wp_enqueue_style('gf-popup-confirmations-style', plugin_dir_url(__FILE__) . 'style.css');
         wp_enqueue_script('gf-popup-confirmations-script', plugin_dir_url(__FILE__) . 'script.js', array('jquery'), false, true);
+        wp_enqueue_script('trapfocus');
     }
 });
 
-// Alternative: Use Gravity Forms' init scripts mechanism
+// Use Gravity Forms' init scripts mechanism for preview mode
 add_action('gform_register_init_scripts', function($form) {
-    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
+    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview' && gf_popup_confirmations_should_use_popup($form)) {
         wp_enqueue_style('gf-popup-confirmations-style', plugin_dir_url(__FILE__) . 'style.css');
         wp_enqueue_script('gf-popup-confirmations-script', plugin_dir_url(__FILE__) . 'script.js', array('jquery'), false, true);
+        wp_enqueue_script('trapfocus');
     }
 });
 
-// Inject script and style directly into form output in preview mode
+// Inject script and style directly into form output in preview mode only when needed
 add_filter('gform_get_form_filter', function($form_string, $form) {
-    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview') {
+    if (isset($_GET['gf_page']) && $_GET['gf_page'] === 'preview' && gf_popup_confirmations_should_use_popup($form)) {
         $style_url = plugin_dir_url(__FILE__) . 'style.css';
         $script_url = plugin_dir_url(__FILE__) . 'script.js';
+        $trapfocus_url = plugin_dir_url(__FILE__) . 'js/trapfocus.js';
         
         $injected_assets = "
         <link rel='stylesheet' type='text/css' href='{$style_url}' />
+        <script type='text/javascript' src='{$trapfocus_url}'></script>
         <script type='text/javascript' src='{$script_url}'></script>
         ";
         

@@ -419,6 +419,14 @@
         // Update the URL without the gfcnf parameter
         window.history.replaceState({}, document.title, newUrl);
         
+        // If an inline confirmation is present, do not show the popup
+        if ($('.gform_confirmation_message:visible').length > 0) {
+            // Clear session storage related to popup
+            sessionStorage.removeItem('gf_popup_last_time');
+            popupConfirmation = null;
+            return;
+        }
+
         // Check if this parameter was just set (within the last few seconds)
         var currentTime = Date.now();
         var lastPopupTime = sessionStorage.getItem('gf_popup_last_time');
