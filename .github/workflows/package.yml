@@ -29,3 +29,8 @@ jobs:
           files: gf-popup-confirmations.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: List files for debugging
+        run: ls -lh
+
+      - name: Fail if zip is missing
+        run: test -f gf-popup-confirmations.zip
