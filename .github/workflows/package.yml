@@ -7,28 +7,23 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Install dependencies (if any)
+      - name: Prepare plugin folder
         run: |
-          [ -f composer.json ] && composer install --no-dev --optimize-autoloader || echo "No composer dependencies"
+          mkdir -p build/gf-popup-confirmations
+          rsync -av --exclude='.git*' --exclude='node_modules' --exclude='.github' --exclude='.cursor' ./ build/gf-popup-confirmations/
 
-      - name: Create plugin directory
-        run: |
-          PLUGIN_SLUG=gf-popup-confirmations
-          mkdir build
-          rsync -av --exclude='.git*' --exclude='node_modules' --exclude='*.md' --exclude='.cursor' \
-            . "build/$PLUGIN_SLUG/"
-
-      - name: Zip plugin
+      - name: Create plugin zip
         run: |
           cd build
-          zip -r "../$PLUGIN_SLUG.zip" "$PLUGIN_SLUG"
+          zip -r ../gf-popup-confirmations.zip gf-popup-confirmations
           cd ..
 
-      - name: Upload plugin ZIP to release
+      - name: Upload plugin zip to release
         uses: softprops/action-gh-release@v1
         with:
           files: gf-popup-confirmations.zip
