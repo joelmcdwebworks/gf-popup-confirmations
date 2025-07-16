@@ -4,7 +4,7 @@
  * Plugin Name:       Gravity Forms Popup Confirmations
  * Plugin URI:        https://mcdwebworks.com
  * Description:       Adds the ability for form submission confirmations to be displayed in modal popups.
- * Version:           2.0.0
+ * Version:           2.0.0-rc.1
  * Author:            Joel McDonald | McDonald Web Works
  * Author URI:        https://mcdwebworks.com
  * License:           GPL v2 or later
