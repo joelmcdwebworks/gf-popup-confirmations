@@ -2,6 +2,11 @@
 
 A WordPress plugin that provides popup modal functionality for Gravity Forms confirmations with enhanced accessibility and modern browser support.
 
+## Video Overview
+
+[![Gravity Forms Popup Confirmations 2.0](https://img.youtube.com/vi/4W1ZsSEOcs8/0.jpg)](https://www.youtube.com/watch?v=4W1ZsSEOcs8)
+
+
 ## Introduction
 
 If you're like me, you LOVE Gravity Forms and the fun and effective things you can do with it. I created this plugin to add functionality requested by a client: displaying form confirmations in a modal, in addition to the text/message, page, or redirect options that Gravity Forms provides out of the box. In 2021, I made the plugin that I developed following that request available for anyone to download at [https://mcdwebworks.com/plugins/gravity-forms-popup-confirmations/](https://mcdwebworks.com/plugins/gravity-forms-popup-confirmations/). Since then, the plugin has been downloaded over 100 times... which is pretty cool for a plugin developed by a virtual unknown and hosted on his own site. I've also used this plugin on a majority of the sites I've worked on for clients... in addition to my own site.
