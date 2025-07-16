@@ -1,0 +1,121 @@
+/* Legacy overlay styles - only used for older browsers */
+#gfcnf-overlay {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    background: rgba(0, 0, 0, 0.3);
+    height: 100%;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    z-index: 999;
+}
+
+.gfcnf-confirmation #gfcnf-overlay {
+    display: flex;
+}
+
+/* Shared styles for both native dialog and legacy modal */
+#gf-popup-confirmation {
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    display: block;
+    margin: auto;
+    max-width: 550px;
+    width: 95%;
+    padding: 30px;
+    z-index: 1000;
+    border: none; /* Remove default dialog border */
+}
+
+/* Native dialog specific styles */
+dialog#gf-popup-confirmation {
+    /* Remove positioning - dialog handles this automatically */
+    position: static;
+    margin: auto;
+}
+
+/* Style the native dialog backdrop */
+dialog#gf-popup-confirmation::backdrop {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* Close button styles */
+#gf-popup-confirmation .close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: #525252;
+    text-decoration: none;
+    transition-duration: 200ms;
+    cursor: pointer;
+    font-size: 28px;
+    padding: 5px;
+    min-width: 30px;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    aspect-ratio: 1/1;
+    background: transparent;
+    border: none;
+    outline: none;
+}
+
+.icon-close {
+    background-image: url('./assets/close-md-svgrepo-com.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 100%;
+    height: 100%;
+}
+
+#gf-popup-confirmation .close:hover {
+    color: #000000;
+    background-color: #f0f0f0;
+}
+
+#gf-popup-confirmation .close:focus {
+    outline: 2px solid var(--global-palette-btn-bg);
+    outline-offset: 2px;
+}
+
+#gf-popup-confirmation .close:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Enhanced focus styles for better accessibility */
+#gf-popup-confirmation .close:focus-visible {
+    outline: 2px solid var(--global-palette-btn-bg);
+    outline-offset: 2px;
+    background-color: #f0f0f0;
+}
+
+/* Ensure sufficient color contrast for focus indicators */
+#gf-popup-confirmation .close:focus-visible {
+    outline-color: #0073aa;
+}
+
+#gf-popup-confirmation .gf-popup-button:focus-visible {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
+}
+
+/* Message styles */
+.gform_confirmation_message {
+    margin-bottom: 1.5rem;
+}
+
+.gform_confirmation_message :is(h1, h2, h3, h4, h5, h6) {
+    margin-bottom: 0.5em;
+}
+
+/* Button focus styles */
+#gf-popup-confirmation .gf-popup-button:focus {
+    outline: 2px solid var(--global-palette-btn-bg);
+    outline-offset: 2px;
+}

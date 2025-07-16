@@ -1,0 +1,36 @@
+name: Package WordPress Plugin
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Prepare plugin folder
+        run: |
+          mkdir -p build/gf-popup-confirmations
+          rsync -av --exclude='.git*' --exclude='node_modules' --exclude='.github' --exclude='.cursor' ./ build/gf-popup-confirmations/
+
+      - name: Create plugin zip
+        run: |
+          cd build
+          zip -r ../gf-popup-confirmations.zip gf-popup-confirmations
+          cd ..
+
+      - name: Upload plugin zip to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: gf-popup-confirmations.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: List files for debugging
+        run: ls -lh
+
+      - name: Fail if zip is missing
+        run: test -f gf-popup-confirmations.zip
