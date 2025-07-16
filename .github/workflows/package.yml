@@ -1,0 +1,36 @@
+name: Package WordPress Plugin
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (if any)
+        run: |
+          [ -f composer.json ] && composer install --no-dev --optimize-autoloader || echo "No composer dependencies"
+
+      - name: Create plugin directory
+        run: |
+          PLUGIN_SLUG=gf-popup-confirmations
+          mkdir build
+          rsync -av --exclude='.git*' --exclude='node_modules' --exclude='*.md' --exclude='.cursor' \
+            . "build/$PLUGIN_SLUG/"
+
+      - name: Zip plugin
+        run: |
+          cd build
+          zip -r "../$PLUGIN_SLUG.zip" "$PLUGIN_SLUG"
+          cd ..
+
+      - name: Upload ZIP to release
+        uses: JasonEtco/upload-to-release@master
+        with:
+          args: gf-popup-confirmations.zip application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
